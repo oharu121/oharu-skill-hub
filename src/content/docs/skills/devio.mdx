@@ -1,0 +1,77 @@
+---
+title: devio
+description: A Claude Code skill for the full DevelopersIO article workflow — drafting with tag search, publishing to Contentful, and auto-translating to Japanese.
+sidebar:
+  badge: { text: Japanese, variant: note }
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../components/InstallCommand.astro';
+
+Draft and publish DevelopersIO articles end-to-end. Search existing tags to stay consistent with the site's taxonomy, draft in English or Japanese, then publish to Contentful with tag resolution and optional auto-translation.
+
+<InstallCommand slug="devio" />
+
+## What it does
+
+Writing for DevelopersIO has two friction points: the Contentful API dance (tag IDs, content types, CMA tokens) and keeping article tags consistent with what's already on the site. This skill handles both.
+
+`/devio article <topic>` drafts a new article. It searches existing DevelopersIO tags so your draft uses the same taxonomy already in use (no "AWS" vs "Amazon Web Services" drift). `/devio publish <file>` takes a finished markdown file and pushes it to Contentful — resolving tag IDs, picking the right content type, and optionally translating the article to Japanese in a second entry.
+
+The skill never reads `.env` directly. All Contentful API calls route through a `contentful.py` helper that reads the CMA token internally, so the secret never enters Claude's context.
+
+## When to use it
+
+- You're a bilingual writer shipping to DevelopersIO and want the same article in English and Japanese without hand-syncing
+- You want consistent tagging — the skill surfaces existing tags so you don't create near-duplicates
+- You prefer drafting in markdown and publishing via CLI over the Contentful web editor
+
+<Aside type="caution" title="When not to use it">
+This skill is shaped for DevelopersIO's Contentful space specifically — content types, tag structure, and translation fields. Adapting it to a generic Contentful blog requires editing `contentful.py` and the article/publish subcommand files.
+</Aside>
+
+## How it works
+
+<Steps>
+
+1. **Draft with tag context.** `/devio article <topic>` searches existing DevelopersIO tags matching the topic, shows you a shortlist, and drafts the article using the tags you pick. The result is a markdown file under `drafts/`.
+
+2. **Review locally.** The draft is plain markdown. Edit it in your usual tools — the skill doesn't own the writing surface.
+
+3. **Publish to Contentful.** `/devio publish drafts/<file>.md` resolves tag names to Contentful IDs, picks the content type, and creates the entry. Asks whether to auto-translate to Japanese as a linked entry.
+
+4. **Verify in Contentful.** The skill returns the entry URL. Publish status is `draft` until you flip it in Contentful's UI — the skill doesn't auto-publish, by design.
+
+</Steps>
+
+## Example
+
+```
+/devio article Setting up Bedrock KB with S3
+```
+
+The skill searches for existing tags like `AWS`, `Bedrock`, `RAG`, shows you the matches, and drafts the article with those tags pre-attached. You edit `drafts/bedrock-kb-s3-setup.md` locally, then:
+
+```
+/devio publish drafts/bedrock-kb-s3-setup.md
+```
+
+It resolves the tags, creates the Contentful entry, and asks "Translate to Japanese?" — yes creates a linked Japanese entry. Both remain drafts; you flip them live from Contentful's UI.
+
+## Security model
+
+- `.env` is **never** read directly by the skill
+- All Contentful API calls go through `scripts/contentful.py`, which reads the CMA token internally
+- The CMA token never enters Claude's context
+- Output the token or `.env` contents is not possible through the skill's interface
+
+## Related skills
+
+<CardGrid>
+  <LinkCard title="generate-bruno-files" href="/skills/generate-bruno-files/" description="When writing API articles, scaffold the sample .bru files alongside." />
+  <LinkCard title="release" href="/skills/release/" description="For article series published as versioned bundles, use release automation." />
+</CardGrid>
+
+## Source
+
+[View `SKILL.md` on GitHub](https://github.com/oharu121/skills/blob/main/skills/devio) — article and publish subcommands, Contentful schema, translation workflow.

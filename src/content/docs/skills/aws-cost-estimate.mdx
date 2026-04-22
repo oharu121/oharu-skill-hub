@@ -1,0 +1,77 @@
+---
+title: aws-cost-estimate
+description: A Claude Code skill that turns architecture documents into monthly AWS cost estimates using the Price List API, with an optional Pricing Calculator share link.
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../components/InstallCommand.astro';
+
+Generate accurate monthly AWS cost estimates from an architecture document. Prices come from the AWS Price List API (not memorized data), and every line item shows its math and source URL.
+
+<InstallCommand slug="aws-cost-estimate" />
+
+## What it does
+
+Point this skill at an architecture document — a markdown design doc, an RFC, even an inline paragraph — and it produces a structured cost report. Services and scale assumptions are extracted from the document, then priced against the live AWS Price List API when the AWS CLI is available, or against web-searched pricing pages when it isn't. The output is a raw report: assumptions, per-service breakdown with the unit-price × usage calculation, monthly total range, and caveats.
+
+The skill is opinionated about honesty. It shows the math for every line item, cites the pricing page URL, flags when it's using US prices as a regional proxy, and calls out which service dominates the total. If your design uses existing infrastructure, those services show as $0 with a note — so the number you present is defensible, not optimistic.
+
+Output language and currency are arguments — Japanese + JPY, English + USD, or any combination. For JPY output the skill prompts for the exchange rate rather than guessing.
+
+## When to use it
+
+- You're writing an RFC or proposal and need a defensible monthly cost figure
+- You want a quick "what if we added OpenSearch?" estimate without opening the AWS Pricing Calculator
+- You need the same estimate in English and Japanese for bilingual stakeholders
+- You want a shareable Pricing Calculator link as the final artifact, not just a markdown report
+
+<Aside type="caution" title="When not to use it">
+This skill estimates *steady-state monthly cost*. It doesn't model burst traffic, reserved-instance discounts, Savings Plans, or negotiated enterprise discounts. For those, export the report and layer on your account-specific adjustments.
+</Aside>
+
+## How it works
+
+<Steps>
+
+1. **Parse the architecture.** The skill extracts AWS services, configurations, and scale assumptions (users, queries/day, data volume) from the input document. Ambiguities that materially affect the estimate become `AskUserQuestion` prompts.
+
+2. **Verify prices (CLI first).** The skill checks whether the AWS CLI is available and authenticated. If yes, it queries the Price List API for exact regional pricing. If no, it falls back to web search with year-scoped queries, then WebFetch on official pricing pages.
+
+3. **Calculate line items.** Each service produces a row: cost/month, unit-price × usage calculation, and the source pricing URL. The skill flags common pitfalls — OpenSearch OCU minimums, Gateway-vs-Interface VPC endpoints, Bedrock embed-vs-generate splits, Transit Gateway per-attachment hourly charges.
+
+4. **Output the report.** A clean markdown report with Assumptions, Monthly Cost Breakdown, Total range, Scaling Options, Initial Costs, and Caveats. No greetings or sign-offs.
+
+5. **Optional calculator link.** The skill asks if you want an AWS Pricing Calculator share link. If yes, it drives Playwright to enter services, configurations, and regions in the calculator UI, then outputs the share URL.
+
+</Steps>
+
+## Example
+
+With [aws-architecture-diagram](/skills/aws-architecture-diagram/) you've designed a realtime pipeline: EventBridge → Kinesis → Lambda → S3 + DynamoDB. Point this skill at the design doc:
+
+```
+/aws-cost-estimate docs/realtime-data-pipeline.md --lang en --currency usd
+```
+
+The report lists each service with its config (Kinesis shard count, Lambda memory × invocations, DynamoDB RCU/WCU), shows the math, cites pricing pages, totals a monthly range, and flags that Kinesis dominates. Caveats note that Tokyo prices are 15–20% higher than us-east-1 and that the Kinesis estimate assumes baseline throughput, not peak.
+
+## Arguments
+
+| Argument | Values | Default |
+|---|---|---|
+| `doc-path` | Path to architecture doc, or inline description | — |
+| `--lang` | `en`, `ja` | `ja` |
+| `--currency` | `usd`, `jpy` | `usd` |
+
+When `--currency jpy`, the skill prompts for the exchange rate rather than guessing.
+
+## Related skills
+
+<CardGrid>
+  <LinkCard title="aws-architecture-diagram" href="/skills/aws-architecture-diagram/" description="Design the architecture first, price it second. Same input feeds both skills." />
+  <LinkCard title="bedrock-ops" href="/skills/bedrock-ops/" description="For Bedrock-heavy designs, the ops skill helps verify assumptions against a real deployed KB." />
+</CardGrid>
+
+## Source
+
+[View `SKILL.md` on GitHub](https://github.com/oharu121/skills/blob/main/skills/aws-cost-estimate) — agent instructions, Price List API reference, and Calculator automation guide.

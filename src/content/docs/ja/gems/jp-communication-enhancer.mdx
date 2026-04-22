@@ -1,0 +1,48 @@
+---
+title: jp-communication-enhancer
+description: 英語ドラフト（または雑な日本語）を 3 段階のビジネス日本語に整える Gemini Gem — Slack、標準ビジネス、フォーマル。クッション言葉と IT 用語にも対応。
+---
+
+import { Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+日本の IT チームで働く非ネイティブ開発者向けの日本語コミュニケーション Gem。英語（または雑な日本語）でドラフトすると、Slack 向け・標準メール・フォーマルの 3 段階を返します。漢字の選択理由や文化的クッション言葉の解説も付きます。
+
+## 何をするか
+
+非ネイティブの開発者がビジネス日本語を書くとき、毎回 3 つの難しい判断があります — どれくらい丁寧にするか、どの技術用語を使うか、直接的な依頼をどう柔らかくするか。この Gem がその 3 つを代行し、選んだ理由を説明します。
+
+すべてのリクエストに対して、正確に 3 つのバージョンを返します。
+
+- **Level 1 — Slack / Teams** — 社内向け、自然で丁寧、効率的。お疲れ様です を多用
+- **Level 2 — Standard Business** — 社内マネージャー宛のメール、フォーマルな会議向け
+- **Level 3 — Formal** — 社外クライアントや上級マネジメント向け
+
+各バージョンには、辞書的な翻訳ではなく実際に日本の開発チームで使われている IT 用語（`起票`、`プルリク`、`コンフリクト`）が組み込まれます。入力が日本語の文脈で直接的すぎる場合は、クッション言葉を追加して、ニュアンスを説明します — たとえば、なぜ「教えて」ではなく「ご教示」を選んだか。
+
+## 使い方
+
+1. [Gemini Gems](https://gemini.google.com/gems) を開き、新しい Gem を作成
+2. 下記プロンプトを Gem の instructions に貼り付け
+3. Gem を保存
+4. チャットに英語のドラフトや雑な日本語を貼る — 3 バージョンと解説が返ります
+
+## 使いどころ
+
+- 日本人の同僚・上司・クライアントにメッセージを送る前に、翻訳調ではなく自然に読める日本語にしたいとき
+- 英語でドラフトしたが直接的すぎる気がして、丁寧な言い換えが欲しいとき
+- *なぜ* その言い回しが適切か学びたいとき — 漢字と動詞の選択理由を簡潔に説明してくれる
+
+<Aside type="tip">
+Level 1/2/3 の出力を同じチャットに貼り戻して「[文脈] ではどれが適切？」と聞くと、Gem が選ぶ手助けをしてくれます。
+</Aside>
+
+## 関連ジェム
+
+<CardGrid>
+  <LinkCard title="daily-briefing" href="/ja/gems/daily-briefing/" description="朝のブリーフィングで返信が必要なメールが出たら、ここで返信をドラフト。" />
+  <LinkCard title="thumbnail-generator" href="/ja/gems/thumbnail-generator/" description="バイリンガルのテックブログでは、日本語執筆とサムネイル生成を組み合わせて。" />
+</CardGrid>
+
+## ソース
+
+[プロンプトを GitHub で見る](https://github.com/oharu121/skills/blob/main/gems/jp-communication-enhancer.md) — 新しい Gem の instructions に貼り付け。

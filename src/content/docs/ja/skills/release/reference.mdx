@@ -1,0 +1,147 @@
+---
+title: リファレンス — release
+description: release スキルの 13 ステップ全体、モード別プリフライトパターン、設定スキーマ、エラーハンドリング表。
+sidebar:
+  label: リファレンス
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+このページはスキルの内部ワークフローを記載しています。スキルを *使う* だけなら読む必要はありません — 動作を理解したい、パターンを拡張したい、失敗をデバッグしたいときの参考資料です。
+
+## 13 ステップワークフロー
+
+スキルは 3 フェーズ、計 13 ステップで動作します。リモート状態を変更するすべてのステップは `AskUserQuestion` でゲートされます。
+
+### Phase 0 — リポジトリ判定
+
+**Step 0.** `package.json`、`pyproject.toml`、`uv.lock`、`skills/`、`git status --short` を確認。`skills-gems`、`npm`、`python`、`monorepo`、`generic` のいずれかに分類。設定に `repo_mode` があればこのステップはスキップ。
+
+### Phase 1 — プリフライト
+
+**Step 1.** `patterns/<mode>.md` のパターンファイルを読んで実行。プリフライトは常に走ります — `preflight_confirm: false` は確認ゲートをスキップするだけで、チェック自体はスキップしません。
+
+### Phase 2 — Issue 作成
+
+**Step 2. コンテキスト収集** — セッションから、何を実装したか、どのファイルを変更したか、主要変更点、破壊的変更の有無を特定。
+
+**Step 2.5. 言語** — `AskUserQuestion`: English / Japanese / Other。plan、Issue 本文、リリースノートに適用（コミットメッセージは常に英語）。
+
+**Step 3. タイトル** — 候補 3 件 + 「Other」（自由入力）。
+
+**Step 4. ラベル** — 複数選択: enhancement、bug、documentation、refactor、またはカスタム。
+
+**Step 5. バージョン** — `git describe --tags --abbrev=0` で現在のタグを取得。patch / minor / major / skip を選択。常に `v` プレフィックス付き。
+
+**Step 6. Plan ファイル** — `.plans/<slugified-title>.md` を `templates/plan.md` から作成。本文は選択した言語、見出しは英語で統一。
+
+**Step 7. GitHub Issue** — `gh api repos/{owner}/{repo}/milestones` で milestone の存在確認、なければ作成。`templates/issue-body.md` の書式で Issue 作成（ラベル、milestone 付き）。
+
+**Step 8. コミットメッセージ** — `feat(<scope>): <description> (#<issue-number>)`（または `fix()`、`docs()`、`refactor()`）。
+
+### Phase 3 — リリース自動化
+
+**Step 9. リモート状態** — `git fetch && git rev-list --count HEAD..@{u}`。リモートに新しいコミットがあれば `pull --rebase` を促す。
+
+**Step 9.5. README + CHANGELOG 同期** — リリース内容から README / CHANGELOG の更新が必要か確認。必要なら commit 前にインラインで編集。
+
+**Step 10. コミット** — `git status --short` を表示、コミットメッセージを提案、確認後 `git add . && git commit`。
+
+**Step 11. タグ** — `git tag v<new-version>`（バージョンスキップ時は飛ばす）。
+
+**Step 12. プッシュ** — 確認後 `git push && git push --tags`。
+
+**Step 13. GitHub リリース** — `gh release create v<version> --title "..." --notes "..."` で plan 内容を本文として作成。`Released in v<version>` または `Shipped in <sha>` で Issue をクローズ。
+
+**設定保存** — `config.json` が起動時に存在しなかった場合、設定保存を確認。
+
+## モード別プリフライト
+
+### skills-gems
+
+- `skills/` 配下の全スキルに有効な `SKILL.md`（フロントマター含む）があるか確認
+- README の skill 表に全スキルディレクトリが載っているか（古いエントリが残っていないか）
+- `CHANGELOG.md` に現在のバージョンのエントリがあるか
+
+### npm
+
+- `npm test` を実行
+- `package.json` のバージョンが意図したバンプと一致するか
+- `README.md` のインストール手順が現在のパッケージ名を参照しているか
+
+### python
+
+- `uv run pytest`（`uv` プロジェクトでなければ `pytest`）
+- `pyproject.toml` のバージョンが一致するか
+- `README.md` のインポート例が現在のモジュール構造と一致するか
+
+### monorepo
+
+- どのサブプロジェクトが変更されたかを検出
+- 変更されたサブプロジェクトごとに該当モードのプリフライトを実行
+- どれか失敗したら中断
+
+### generic
+
+- 未コミットの変更の確認
+- ステージ漏れの untracked ファイルの確認
+- 最小限の sanity — このモードはフォールバックであり、安全網ではない
+
+## 設定ファイルスキーマ
+
+場所: `.claude/skills/release/config.json`（プロジェクトルート相対）。
+
+```json
+{
+  "language": "en",
+  "repo_mode": "skills-gems",
+  "preflight_confirm": false
+}
+```
+
+| フィールド | 効果 |
+|---|---|
+| `language` | Step 2.5 をスキップしこの言語を使用 |
+| `repo_mode` | Phase 0 判定をスキップしこのモードを使用 |
+| `preflight_confirm: false` | 確認ゲートをスキップしプリフライトを静かに実行 |
+
+全フィールド任意。未設定の項目は対話フローにフォールバック。
+
+## エラーハンドリング
+
+| シナリオ | 対応 |
+|---|---|
+| リモート fetch 失敗 | 警告して続行 |
+| Pull でコンフリクト | 停止、手動解決を案内 |
+| プリフライト失敗 | 停止、`AskUserQuestion` でプリフライトスキップ or 修正 |
+| コミット失敗 | 停止（恐らく pre-commit hook）、修正して再実行 |
+| タグ既存 | 停止、次バージョン提案つき `AskUserQuestion` |
+| プッシュ失敗 | 警告、`git push && git push --tags` の手動コマンドを提示 |
+| `gh` 未インストール | 警告、手動リリース URL を提示 |
+| GitHub API レート制限 | 少し待ってリトライで OK、エラーを表示 |
+
+## 出力形式
+
+### バージョンあり
+
+```
+Release complete!
+
+- Issue:   [#42](https://github.com/oharu121/skills/issues/42)
+- Version: v0.3.0 → v0.3.1
+- Tag:     v0.3.1
+- Release: [v0.3.1](https://github.com/oharu121/skills/releases/tag/v0.3.1)
+```
+
+### バージョンスキップ時
+
+```
+Changes committed and pushed!
+
+- Issue:  [#42](https://github.com/oharu121/skills/issues/42)
+- Commit: feat(skills): add xyz skill (#42)
+
+No version tag or GitHub release (skipped).
+```
+
+出力は常にプレーンマークダウン（コードブロックではなく）。IDE 上でリンクがクリック可能になるため。

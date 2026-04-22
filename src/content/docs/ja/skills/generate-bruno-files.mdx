@@ -1,0 +1,85 @@
+---
+title: generate-bruno-files
+description: ソースコードから HTTP リクエストを抽出し Bruno 用の .bru ファイルを生成する Claude Code スキル。kebab-case 命名、連番、コレクション変数の吸い上げに対応。
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../../components/InstallCommand.astro';
+
+ソースファイルを指すと、中に含まれるすべての HTTP リクエスト用に Bruno `.bru` ファイルを生成します — 適切な命名、連番、共有変数のコレクションへの吸い上げつきで。
+
+<InstallCommand slug="generate-bruno-files" />
+
+## 何をするか
+
+[Bruno](https://www.usebruno.com/) を API クライアントとして使うプロジェクトでは `.bruno/` ディレクトリにリクエストファイルが蓄積されます。これを手で作るのは地味に手間です — ソースから URL をコピーし、ヘッダーを整形し、ファイル名を考え、連番を決め、これを全エンドポイントで繰り返します。このスキルがソースを読んでくれます。
+
+メソッド、URL、ヘッダー、クエリパラメータ、リクエストボディをコードから抽出。ユニークなエンドポイントごとに kebab-case の `.bru` ファイルを書き出します（URL パスではなく **アクション** ベースの命名 — `list-users.bru` であって `get-api-v1-users.bru` ではない）。次の連番を自動で付与し、シークレット・トークン・動的 ID は `{{variable}}` プレースホルダーにします（ハードコードしません）。
+
+`.bruno/collection.example.bru` にまだない変数が必要になれば提案してくれます。ローカルの `collection.bru`（gitignore 対象）に値を入れることも忘れず案内してくれます。
+
+## 使いどころ
+
+- プロジェクトに API クライアントを追加したので、手で 1 本ずつ書かずに Bruno ファイルを用意したいとき
+- 新メンバーのオンボーディングで「開いて Send 押すだけ」の `.bruno/` コレクションを用意したいとき
+- クライアントモジュールをリファクタした後、Bruno ファイルを新しいエンドポイントに追従させたいとき
+
+<Aside type="caution" title="向いていないケース">
+スキルは現在のソースコードに書かれたものだけを読みます。実行時に動的に組み立てられるエンドポイント、ゲートウェイでプロキシされるもの、OpenAPI/Swagger でしか定義されていないものは発見できません。OpenAPI 主導のプロジェクトには Bruno 本体のスペックインポーターがあります。
+</Aside>
+
+## 動作の流れ
+
+<Steps>
+
+1. **API 呼び出しの抽出。** 指定したソースファイルを読み、各 HTTP リクエストのメソッド、URL、ヘッダー、クエリ、ボディを抽出します。
+
+2. **重複チェック。** `.bruno/` の既存 `.bru` ファイルを列挙。カバー済みのエンドポイントはスキップし、どれがスキップされたかを伝えます。
+
+3. **変数の棚卸し。** `.bruno/collection.example.bru` を読み、既に定義されている変数を把握。新規に必要な変数があればメモしておきます。
+
+4. **`.bru` ファイル生成。** ユニークなエンドポイントごとに kebab-case 命名（`verb-resource.bru`）で `meta`、HTTP 動詞ブロック、任意の `auth:bearer`、headers、`body:json` を含むファイルを作成します。
+
+5. **コレクション変数の更新。** 新規変数は空値で `collection.example.bru` に追加。ローカルの `collection.bru` に値を入れるようリマインドします。
+
+6. **サマリー出力。** 作成したファイルとメソッド、エンドポイント、ソース位置を表で表示。
+
+</Steps>
+
+## 使用例
+
+`src/api/orders.ts` に API クライアントがあるとします。
+
+```
+/generate-bruno-files src/api/orders.ts
+```
+
+スキルの出力：
+
+| ファイル | メソッド | エンドポイント | ソース |
+|---|---|---|---|
+| `list-orders.bru` | GET | `/api/v1/orders` | `orders.ts:12` |
+| `get-order.bru` | GET | `/api/v1/orders/{{order_id}}` | `orders.ts:24` |
+| `create-order.bru` | POST | `/api/v1/orders` | `orders.ts:36` |
+
+「`collection.example.bru` に `order_id` を追加しました。ローカルの `collection.bru` に値を入れてください」というリマインドも付きます。
+
+## 命名・書式の規約
+
+- **名前** — kebab-case、アクション先頭（`list-users.bru` であって `users-list.bru` や `GET_users.bru` ではない）
+- **連番** — コレクション内で次に空いている `seq`
+- **変数** — トークン、ID、シークレットは `{{name}}` — ハードコードしない
+- **認証** — Bearer トークンを使う場合は `auth:bearer` ブロックを追加
+- **ヘッダー** — 非標準ヘッダーのみ記載（`Content-Type: application/json` は Bruno が自動処理するため不要）
+- **ボディ** — POST/PUT/PATCH では、ソースのペイロード形状に合う現実的なサンプルを記載
+
+## 関連スキル
+
+<CardGrid>
+  <LinkCard title="devio" href="/ja/skills/devio/" description="API 記事を書くとき、Bruno コレクションを生成してドラフトで参照。" />
+  <LinkCard title="migrate-env-to-1password" href="/ja/skills/migrate-env-to-1password/" description="Bruno 環境で API キーが必要なら、1Password に置いておく。" />
+</CardGrid>
+
+## ソース
+
+[`SKILL.md` を GitHub で見る](https://github.com/oharu121/skills/blob/main/skills/generate-bruno-files) — 抽出ルール、`.bru` ファイル形式、コレクション変数規約。

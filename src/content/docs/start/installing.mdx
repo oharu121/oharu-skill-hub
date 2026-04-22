@@ -1,0 +1,92 @@
+---
+title: Installing skills
+description: How to install Claude Code skills from the oharu121/skills repo — supports gh, npx, and pnpm, all reading the same Agent Skills specification.
+---
+
+import { Tabs, TabItem, Steps, Aside, Code } from '@astrojs/starlight/components';
+
+All skills in this hub follow the open [Agent Skills specification](https://agentskills.io) and install via any compatible CLI. Pick whichever is easiest — the outcome is identical.
+
+## Pick a package manager
+
+<Tabs syncKey="pm">
+  <TabItem label="gh">
+    The official GitHub CLI extension (v2.90+). Lets you preview before installing.
+
+    ```bash
+    gh skill install oharu121/skills <name>
+    ```
+
+    Preview first:
+
+    ```bash
+    gh skill preview oharu121/skills <name>
+    ```
+  </TabItem>
+  <TabItem label="npx">
+    Node / npm users. No global install needed.
+
+    ```bash
+    npx skills add oharu121/skills/<name>
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    pnpm users — `pnpm dlx` is the equivalent of `npx`.
+
+    ```bash
+    pnpm dlx skills add oharu121/skills/<name>
+    ```
+  </TabItem>
+</Tabs>
+
+Replace `<name>` with the skill slug (e.g., `aws-architecture-diagram`).
+
+## Scope: project or user
+
+By default the skill installs into the current project's `.claude/skills/` directory. To install user-scoped (available in every project at `~/.claude/skills/`), pass `-g`:
+
+```bash
+gh skill install -g oharu121/skills <name>
+npx skills add -g oharu121/skills/<name>
+```
+
+Which scope is right depends on the skill:
+
+- **Project scope** — when the skill reads project files (generate-bruno-files, devio, release)
+- **User scope** — when the skill is a personal helper (aws-architecture-diagram, aws-cost-estimate)
+
+## Updating and removing
+
+<Steps>
+
+1. **Update** — re-install with the same command to pull the latest version, or use the explicit update command:
+
+   ```bash
+   gh skill update oharu121/skills/<name>
+   npx skills update oharu121/skills/<name>
+   ```
+
+2. **Remove** — the inverse:
+
+   ```bash
+   gh skill remove oharu121/skills/<name>
+   npx skills remove oharu121/skills/<name>
+   ```
+
+</Steps>
+
+## Which agent runs these?
+
+Primary target: **Claude Code** (Anthropic's official CLI). Some skills use Claude-specific frontmatter like `user-invocable: true`, which makes them callable as `/skill-name` slash commands.
+
+Secondary targets: any agent supported by the `gh skill` or `npx skills` CLIs. Both auto-detect `.claude/`, `.cursor/`, `.codex/`, and 40+ other agent directories. Skills will still work in those environments, but features like `AskUserQuestion` may degrade to plain-text prompts, and the `/skill-name` invocation syntax may not be available.
+
+<Aside type="tip">
+If the skill's README mentions `/skill-name` slash commands, you're using Claude Code. If you're on another agent, invoke the skill by its full name or file path — the skill's behavior stays the same.
+</Aside>
+
+## First-time setup per skill
+
+Some skills need setup on first run (e.g. `bedrock-ops` needs `aws-project.json`, `release` offers to save preferences to `config.json`). That setup is documented on each skill's page under "How it works" or "Setup".
+
+Once installed, browse [Skills](/skills/) for the full catalog.

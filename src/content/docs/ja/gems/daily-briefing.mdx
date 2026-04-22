@@ -1,0 +1,45 @@
+---
+title: daily-briefing
+description: 今日のカレンダー予定と優先度の高いメールを朝のブリーフィングにまとめる Gemini Gem。プロンプトを新規 Gem に貼り付けて使います。
+---
+
+import { Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Google カレンダーと Gmail を組み合わせて、朝の自分向けスタンドアップを作る Gem。`start` と打つと、今日のスケジュールと即対応が必要なメールが返ってきます。
+
+## 何をするか
+
+朝には毎日同じ作業があります — カレンダーを見て、優先度の高いメールに目を通し、今日何に集中するか決める。この Gem が、Gemini の Google カレンダーと Gmail 連携を使ってその作業を代行します。`start` と打つと、2 セクションのきれいな出力が返ります — **Today's Schedule**（時刻・タイトル・会議リンク付きの時系列イベント）と **Action Required Emails**（優先度ルールにマッチする未読メッセージ: 上司やクライアントからの直接的な質問、今日・明日の緊急締切、本日のスケジュールに影響するミーティングキャンセルなど）。
+
+網羅性より速度重視です。説明は短く歯切れよく。対応不要なメールはサマリーしません。ミーティングのディープリンクは存在するときだけ表示します。
+
+## 使い方
+
+これは **Gemini Gem** であり Claude Code スキルではありません — CLI でインストールするのではなく、次の手順で使います：
+
+1. [Gemini Gems](https://gemini.google.com/gems) を開き、新しい Gem を作成
+2. 下記プロンプトを Gem の instructions に貼り付け
+3. Gem を保存
+4. 初回は Gemini の Google カレンダーと Gmail 連携を承認
+5. Gem のチャットで `start` と入力 — ブリーフィングが表示されます
+
+<Aside title="プロンプト内の日付">
+GitHub 上のプロンプトには例として日付（`[March 11, 2026]`）がハードコードされています。貼り付け前に `today` や Gem が理解するテンプレートプレースホルダーに置き換えてください。そうしないと毎朝同じ日付が使われます。
+</Aside>
+
+## 使いどころ
+
+- 自分の一日を 30 秒で把握する朝のスタンドアップが欲しいとき
+- 「1 日を確認するためにタブを 4 つ開く」を 1 プロンプトに置き換えたいとき
+- カレンダー + メールを別々に見るのではなく、統合された形で欲しいとき
+
+## 関連ジェム
+
+<CardGrid>
+  <LinkCard title="jp-communication-enhancer" href="/ja/gems/jp-communication-enhancer/" description="ブリーフィングで返信が必要なメールが出たら、こちらのジェムで日本語返信を作成。" />
+  <LinkCard title="thumbnail-generator" href="/ja/gems/thumbnail-generator/" description="ビジュアル優先のジェム。コンテンツ制作パイプラインでは朝のブリーフィングと相性が良い。" />
+</CardGrid>
+
+## ソース
+
+[プロンプトを GitHub で見る](https://github.com/oharu121/skills/blob/main/gems/daily-briefing.md) — 新しい Gem の instructions に貼り付け。

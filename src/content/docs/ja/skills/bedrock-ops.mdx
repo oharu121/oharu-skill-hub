@@ -1,0 +1,83 @@
+---
+title: bedrock-ops
+description: Bedrock Knowledge Base + S3 の RAG パイプラインをセーフティガード付きで運用する Claude Code スキル。身元確認、dry-run 先行、MFA セッション自動更新、インジェスト監視に対応。
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../../components/InstallCommand.astro';
+
+Bedrock KB + S3 RAG データパイプラインをガードレール付きで運用します。内容のみ変更されたときの force-upload 対応 S3 sync、KB インジェスト監視、コスト監視、そして TOTP による MFA セッション自動更新 — すべてアイデンティティ検証の安全層を経由します。
+
+<InstallCommand slug="bedrock-ops" />
+
+## 何をするか
+
+Bedrock KB を本番運用していると、S3 アップロード、インジェスト実行、そしてたまに発生する「今どのアカウントにログインしているんだっけ？」という瞬間が日常的に発生します。このスキルはそれらを安全層でラップします。すべての書き込みの前に STS アイデンティティが設定済みのアカウントと一致するか検証し、すべての sync は dry-run が先行し、破壊的なフラグは明示的にオプトインしないとブロックされ、MFA セッションはバージョン管理外に保存された TOTP シークレットで自動更新されます。
+
+使い慣れたコマンド — `s3 sync`、`s3 cp`、`bedrock-agent start-ingestion-job`、`ce get-cost-and-usage` — はすべて `aws_safe.py` 経由でルーティングされ、同じルールが一貫して適用されます。自然文でやりたいことを伝えると、Claude Code が適切なサブコマンドを選びます。
+
+地味だが重要な落とし穴にも対応しています。`s3 sync` は *内容* が変わってもバイト数が同じファイルをスキップします（マークダウンにチャンクアンカーを追加する場合などによくあります）。専用の `force-upload` インテントでは代わりに `s3 cp --recursive` を使い、KB が新しい内容を確実に見るようにします。
+
+## 使いどころ
+
+- Bedrock RAG パイプラインを運用していて、S3/KB 操作全体に一貫した安全ルールを適用したいとき
+- MFA コードを毎回入力するのが面倒で、TOTP 自動更新を使いたいとき
+- インジェストジョブの監視に、また 15 秒 sleep ループを書きたくないとき
+- チームで KB を共有していて、身元の不一致を大きな音で失敗させたいとき
+
+<Aside type="caution" title="向いていないケース">
+このスキルは特定の構成を前提にしています — Bedrock KB 1 つ、S3 データソース 1 つ、MFA 保護されたコンソールアクセス、リポジトリルートの `aws-project.json`。多数の KB や管理外のアクセスキーを運用する環境では、この安全モデルはフィットしません。
+</Aside>
+
+## 動作の流れ
+
+<Steps>
+
+1. **初回セットアップ。** `uv run python setup_project.py <profile> [s3-bucket]` を実行します — 利用可能な AWS プロファイル一覧を表示し、`aws-project.json` を生成します。MFA serial と TOTP シークレットは `aws-project.local.json`（gitignore 対象）に追加します。
+
+2. **セッション検証。** `/bedrock-ops verify` が `sts get-caller-identity` を実行し、設定済みのアカウント ID と照合します。セッションが期限切れなら、TOTP 自動更新が静かに再発行します。
+
+3. **書き込みは必ず dry-run。** S3 sync / cp はまず dry-run します。差分を確認してから `--execute` で実行。確認バナーにプロファイル、アカウント、コマンド、モードが表示されます。
+
+4. **インジェスト監視。** `/bedrock-ops kb sync <kb-id>` はデータソース ID を自動検出してインジェストを開始し、15 秒ごとに `COMPLETE` または `FAILED` になるまでポーリングし、経過時間を表示します。
+
+5. **内容変更のみの force-upload。** チャンクアンカーは変わってもファイルサイズが同じ場合、sync はスキップします。`/bedrock-ops s3 force-upload` は `s3 cp --recursive` ですべてのファイルをプッシュします。
+
+</Steps>
+
+## 使用例
+
+Bedrock KB に食わせる Markdown を更新 — ファイルサイズは変えずにチャンクアンカーを追加しました。
+
+```
+/bedrock-ops s3 force-upload ./docs s3://my-rag-bucket/docs/
+```
+
+スキルはまずアイデンティティを確認し、dry-run の差分を表示し、`--execute` を促し、全ファイルをアップロード。続いて：
+
+```
+/bedrock-ops kb sync kb-abc123
+```
+
+インジェストを開始し完了まで監視、`COMPLETE in 3m 42s` と表示されます。
+
+## セーフティルール（常時適用）
+
+1. **身元チェック** — STS caller は `aws-project.json` の `account_id` と一致する必要あり
+2. **明示プロファイル** — すべてのコマンドは設定の `--profile` を使用、環境変数は無視
+3. **Dry-run 先行** — `s3 sync`/`cp`/`mv` は明示的な `--execute` が必要
+4. **サイレント削除なし** — `--delete` は `--i-understand-this-deletes` なしではブロック
+5. **サービスブロックリスト** — `iam` と `organizations` はデフォルトで拒否
+6. **確認バナー** — 書き込み前にプロファイル、アカウント、コマンド、モードを表示
+7. **セッション自動更新** — 期限切れセッションは `aws-project.local.json` の TOTP で再発行
+
+## 関連スキル
+
+<CardGrid>
+  <LinkCard title="aws-architecture-diagram" href="/ja/skills/aws-architecture-diagram/" description="RAG トポロジーを設計 — このスキルがそれを運用します。" />
+  <LinkCard title="migrate-env-to-1password" href="/ja/skills/migrate-env-to-1password/" description="TOTP シークレットや MFA serial を平文の .env に置かないためのスキル。" />
+</CardGrid>
+
+## ソース
+
+[`SKILL.md` を GitHub で見る](https://github.com/oharu121/skills/blob/main/skills/bedrock-ops) — コマンド一覧、`aws-project.json` スキーマ、`aws_safe.py` 実装。

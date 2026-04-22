@@ -1,0 +1,85 @@
+---
+title: generate-bruno-files
+description: A Claude Code skill that reads source code, extracts HTTP requests, and scaffolds Bruno .bru files — kebab-case names, sequence numbers, and shared collection variables.
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../components/InstallCommand.astro';
+
+Point this skill at a source file, and it produces Bruno `.bru` request files for every HTTP call it finds — properly named, sequenced, with shared variables pulled up into the collection.
+
+<InstallCommand slug="generate-bruno-files" />
+
+## What it does
+
+Any project that uses [Bruno](https://www.usebruno.com/) as its API client accumulates a `.bruno/` directory of request files. Bootstrapping those files by hand is tedious: you copy the URL from source, reformat headers, name the file something sensible, pick a sequence number, and repeat for every endpoint. This skill reads the source file for you.
+
+It extracts method, URL, headers, query params, and request body from your code. For each unique endpoint it writes a `.bru` file with a kebab-case name based on the action (`list-users.bru`, not `get-api-v1-users.bru`), picks the next sequence number, and uses `{{variable}}` placeholders for any secrets, tokens, or dynamic IDs rather than hardcoding them.
+
+When a request needs a new variable that's not already in `.bruno/collection.example.bru`, the skill proposes it and reminds you to fill the value locally in `collection.bru` (gitignored).
+
+## When to use it
+
+- You just added an API client to a project and want Bruno files to test it without handwriting each one
+- You're onboarding a teammate and want a ready-made `.bruno/` collection they can open and hit "Send"
+- You refactored a client module and want Bruno files to stay in sync with the new endpoints
+
+<Aside type="caution" title="When not to use it">
+The skill reads what's in source code right now. It won't discover endpoints that are generated at runtime, proxied through a gateway, or described only in OpenAPI/Swagger specs. For OpenAPI-driven projects, Bruno has its own spec importer.
+</Aside>
+
+## How it works
+
+<Steps>
+
+1. **Identify API calls.** The skill reads the source file you specify, extracting method, URL, headers, query params, and request body for each HTTP request.
+
+2. **Check for duplicates.** Existing `.bru` files in `.bruno/` are listed first. Endpoints already covered are skipped; you're told which.
+
+3. **Review variables.** The skill reads `.bruno/collection.example.bru` to see which variables are already defined, and notes any new ones needed.
+
+4. **Create .bru files.** Each unique endpoint becomes a kebab-case-named file (`verb-resource.bru`) with `meta`, HTTP verb block, optional `auth:bearer`, headers, and `body:json` — following Bruno's file format conventions.
+
+5. **Update collection variables.** New variables are added to `collection.example.bru` with empty values. You're reminded to fill them locally in `collection.bru`.
+
+6. **Summary.** A table of created files with method, endpoint, and source location.
+
+</Steps>
+
+## Example
+
+Your codebase has an API client at `src/api/orders.ts`:
+
+```
+/generate-bruno-files src/api/orders.ts
+```
+
+The skill produces:
+
+| File | Method | Endpoint | Source |
+|---|---|---|---|
+| `list-orders.bru` | GET | `/api/v1/orders` | `orders.ts:12` |
+| `get-order.bru` | GET | `/api/v1/orders/{{order_id}}` | `orders.ts:24` |
+| `create-order.bru` | POST | `/api/v1/orders` | `orders.ts:36` |
+
+Plus a note: "Added `order_id` to `collection.example.bru`. Fill the value in your local `collection.bru`."
+
+## Conventions
+
+- **Names** — kebab-case action-first (`list-users.bru`, not `users-list.bru` or `GET_users.bru`)
+- **Sequence** — next available `seq` across the collection
+- **Variables** — `{{name}}` for tokens, IDs, secrets — never hardcoded
+- **Auth** — `auth:bearer` block when bearer tokens are used
+- **Headers** — only non-standard headers (not `Content-Type: application/json` — Bruno handles that)
+- **Body** — realistic example bodies matching the source's payload shape
+
+## Related skills
+
+<CardGrid>
+  <LinkCard title="devio" href="/skills/devio/" description="When writing API articles, generate the Bruno collection and reference it in the draft." />
+  <LinkCard title="migrate-env-to-1password" href="/skills/migrate-env-to-1password/" description="For Bruno environments that need API keys, store them in 1Password." />
+</CardGrid>
+
+## Source
+
+[View `SKILL.md` on GitHub](https://github.com/oharu121/skills/blob/main/skills/generate-bruno-files) — extraction rules, `.bru` file format, collection variable conventions.

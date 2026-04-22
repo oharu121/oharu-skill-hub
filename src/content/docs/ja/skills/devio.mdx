@@ -1,0 +1,75 @@
+---
+title: devio
+description: DevelopersIO の記事執筆・公開ワークフローを一気通貫で行う Claude Code スキル。タグ検索つきドラフト、Contentful 公開、日本語への自動翻訳に対応。
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../../components/InstallCommand.astro';
+
+DevelopersIO 記事のドラフトから公開までをひと続きで処理します。サイトのタクソノミーと整合する既存タグを検索してドラフトし、タグを解決した上で Contentful に公開、必要なら日本語版も自動生成します。
+
+<InstallCommand slug="devio" />
+
+## 何をするか
+
+DevelopersIO への寄稿で詰まるのは 2 つです。Contentful API の作法（タグ ID、コンテンツタイプ、CMA トークン）と、サイト既存のタグ体系と整合を取ること（「AWS」と「Amazon Web Services」の表記ゆれなど）。このスキルは両方を処理します。
+
+`/devio article <topic>` で新規記事をドラフト。DevelopersIO の既存タグを検索し、既に使われているタクソノミーに沿ってドラフトを書きます。`/devio publish <file>` は仕上げた Markdown を Contentful にプッシュ — タグ ID を解決し、コンテンツタイプを選択し、必要なら日本語翻訳を別エントリとして作成します。
+
+スキルは `.env` を直接読みません。すべての Contentful API 呼び出しは `contentful.py` ヘルパー経由で、CMA トークンはスクリプト内部で読み込まれます。Claude のコンテキストにシークレットが入ることはありません。
+
+## 使いどころ
+
+- バイリンガルライターで、DevelopersIO に英日両方の記事を手動同期せずに出したいとき
+- タグを一貫させたい — 既存タグが見えるので類似タグを新規作成しない
+- Markdown で書いて CLI で公開したい派で、Contentful の Web エディタは避けたい
+
+<Aside type="caution" title="向いていないケース">
+このスキルは DevelopersIO の Contentful スペース前提に作られています（コンテンツタイプ、タグ構造、翻訳フィールド）。汎用 Contentful ブログに適用するには `contentful.py` と article / publish サブコマンドファイルの編集が必要です。
+</Aside>
+
+## 動作の流れ
+
+<Steps>
+
+1. **タグコンテキスト付きドラフト。** `/devio article <topic>` がトピックに合致する既存 DevelopersIO タグを検索、ショートリストを表示。選んだタグを付けて記事をドラフトし `drafts/` 配下にマークダウンで出力します。
+
+2. **ローカルでレビュー。** ドラフトは普通の Markdown です。スキルは執筆面には触れません — 使い慣れたエディタで編集してください。
+
+3. **Contentful に公開。** `/devio publish drafts/<file>.md` がタグ名を Contentful ID に解決し、コンテンツタイプを選択し、エントリを作成します。「日本語翻訳を作りますか？」と確認し、Yes ならリンクされた日本語エントリを生成します。
+
+4. **Contentful で確認。** スキルはエントリ URL を返します。公開ステータスは意図的に `draft` のまま — 実際の公開は Contentful UI で手動実行します。
+
+</Steps>
+
+## 使用例
+
+```
+/devio article S3 と Bedrock KB のセットアップ
+```
+
+スキルは `AWS`、`Bedrock`、`RAG` のような既存タグを検索して表示。選んだタグを付けて `drafts/bedrock-kb-s3-setup.md` としてドラフトします。ローカルで仕上げたら：
+
+```
+/devio publish drafts/bedrock-kb-s3-setup.md
+```
+
+タグを解決し、Contentful エントリを作成し、「日本語に翻訳しますか？」と確認。Yes で日本語エントリも作成されます。どちらもドラフト状態で、公開は Contentful UI から行います。
+
+## セキュリティモデル
+
+- スキルは `.env` を **直接** 読みません
+- すべての Contentful API 呼び出しは `scripts/contentful.py` 経由
+- CMA トークンは Claude のコンテキストに入りません
+- スキルのインターフェースから `.env` やトークンを出力することはできません
+
+## 関連スキル
+
+<CardGrid>
+  <LinkCard title="generate-bruno-files" href="/ja/skills/generate-bruno-files/" description="API 記事を書くとき、サンプル .bru ファイルも一緒にスキャフォールド。" />
+  <LinkCard title="release" href="/ja/skills/release/" description="バージョン付きでまとめて公開する記事シリーズには、リリース自動化と組み合わせて。" />
+</CardGrid>
+
+## ソース
+
+[`SKILL.md` を GitHub で見る](https://github.com/oharu121/skills/blob/main/skills/devio) — article / publish サブコマンド、Contentful スキーマ、翻訳ワークフロー。

@@ -1,0 +1,43 @@
+---
+import { Tabs, TabItem, Code } from '@astrojs/starlight/components';
+import { getSkill, resolveLocale } from '../data/skills';
+
+type Props = { slug: string };
+const { slug } = Astro.props;
+
+const skill = getSkill(slug);
+if (!skill) throw new Error(`Unknown skill slug: ${slug}`);
+
+const locale = resolveLocale(Astro.currentLocale);
+const labels = locale === 'ja'
+	? { note: 'お好みのパッケージマネージャでインストールしてください。' }
+	: { note: 'Install with your preferred package manager.' };
+---
+
+{skill.install ? (
+	<div class="install-command">
+		<p>{labels.note}</p>
+		<Tabs syncKey="pm">
+			<TabItem label="gh">
+				<Code code={skill.install.gh} lang="bash" />
+			</TabItem>
+			<TabItem label="npx">
+				<Code code={skill.install.npx} lang="bash" />
+			</TabItem>
+			<TabItem label="pnpm">
+				<Code code={skill.install.pnpm} lang="bash" />
+			</TabItem>
+		</Tabs>
+	</div>
+) : null}
+
+<style>
+	.install-command {
+		margin-block: 1.5rem;
+	}
+	.install-command p {
+		margin-block-end: 0.5rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+</style>

@@ -1,0 +1,83 @@
+---
+title: bedrock-ops
+description: A Claude Code skill for operating a Bedrock Knowledge Base + S3 RAG pipeline with safety rails — identity checks, dry-run-first syncs, MFA session auto-refresh, and ingestion polling.
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../components/InstallCommand.astro';
+
+Operate a Bedrock Knowledge Base + S3 RAG data pipeline with guardrails. S3 sync with force-upload for content-only changes, KB ingestion polling, cost monitoring, and automatic MFA session refresh — all mediated by an identity-checking safety layer.
+
+<InstallCommand slug="bedrock-ops" />
+
+## What it does
+
+Running a Bedrock KB in production means daily S3 uploads, ingestion runs, and the occasional "who am I logged in as?" moment. This skill wraps those operations in a safety layer: every write verifies your STS identity matches the configured account, every sync runs dry-run first, destructive flags are blocked unless you explicitly opt in, and MFA sessions auto-refresh via a TOTP secret stored outside of version control.
+
+The operational commands you'd reach for — `s3 sync`, `s3 cp`, `bedrock-agent start-ingestion-job`, `ce get-cost-and-usage` — all route through `aws_safe.py`, which enforces the same rules regardless of what you ran. You describe what you want in natural language, and Claude Code picks the right subcommand.
+
+The skill also handles a subtle pitfall: `s3 sync` skips files where only *content* changed if byte count is the same (common when you re-chunk markdown with different anchors). A dedicated `force-upload` intent uses `s3 cp --recursive` instead, so the KB sees the new content.
+
+## When to use it
+
+- You run a Bedrock RAG pipeline and want consistent safety rails across all S3/KB operations
+- You're tired of re-entering MFA codes — TOTP auto-refresh handles it
+- You need to poll ingestion jobs without writing another 15-second sleep loop
+- You share the KB across multiple team members and want an identity mismatch to fail loudly
+
+<Aside type="caution" title="When not to use it">
+This skill assumes a specific setup: one Bedrock KB, one S3 data source, MFA-protected console access, and `aws-project.json` at the repo root. If you operate many KBs or unmanaged access keys, the safety model won't fit.
+</Aside>
+
+## How it works
+
+<Steps>
+
+1. **First-time setup.** Run `uv run python setup_project.py <profile> [s3-bucket]` — it lists available AWS profiles and generates `aws-project.json`. Drop your MFA serial and TOTP secret into `aws-project.local.json` (gitignored).
+
+2. **Session verify.** `/bedrock-ops verify` runs `sts get-caller-identity` and checks it against the configured account ID. If the session is expired, TOTP auto-refresh regenerates it silently.
+
+3. **Dry-run any write.** S3 syncs and copies always dry-run first. You see what would change, then pass `--execute` to make it real. The confirmation banner shows profile, account, command, and mode.
+
+4. **Poll ingestions.** `/bedrock-ops kb sync <kb-id>` auto-detects the data source ID, starts the ingestion, then polls every 15 seconds until `COMPLETE` or `FAILED`, printing elapsed time.
+
+5. **Force-upload for content-only changes.** When chunk anchors change but file sizes don't, sync skips them. `/bedrock-ops s3 force-upload` uses `s3 cp --recursive` to push every file.
+
+</Steps>
+
+## Example
+
+You've updated the markdown docs feeding a Bedrock KB — added chunk anchors without changing file sizes.
+
+```
+/bedrock-ops s3 force-upload ./docs s3://my-rag-bucket/docs/
+```
+
+The skill confirms identity, shows a dry-run diff, prompts for `--execute`, uploads every file, then you run:
+
+```
+/bedrock-ops kb sync kb-abc123
+```
+
+It starts the ingestion and polls until done, printing `COMPLETE in 3m 42s` when finished.
+
+## Safety rules (always on)
+
+1. **Identity check** — STS caller must match `account_id` in `aws-project.json`
+2. **Explicit profile** — every command uses `--profile` from config; env vars ignored
+3. **Dry-run first** — `s3 sync`/`cp`/`mv` require explicit `--execute`
+4. **No silent deletes** — `--delete` blocked unless `--i-understand-this-deletes` is passed
+5. **Service blocklist** — `iam` and `organizations` denied by default
+6. **Confirmation banner** — profile, account, command, and mode shown before any write
+7. **Session auto-refresh** — expired sessions re-issue via TOTP from `aws-project.local.json`
+
+## Related skills
+
+<CardGrid>
+  <LinkCard title="aws-architecture-diagram" href="/skills/aws-architecture-diagram/" description="Design the RAG topology — this skill operates it." />
+  <LinkCard title="migrate-env-to-1password" href="/skills/migrate-env-to-1password/" description="Keep TOTP secrets and MFA serials out of plaintext .env files." />
+</CardGrid>
+
+## Source
+
+[View `SKILL.md` on GitHub](https://github.com/oharu121/skills/blob/main/skills/bedrock-ops) — full command matrix, `aws-project.json` schema, and `aws_safe.py` implementation.

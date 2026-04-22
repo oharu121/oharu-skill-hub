@@ -1,0 +1,62 @@
+---
+title: Gemini ジェムの使い方
+description: このハブのジェムの使い方 — CLI でインストールするのではなく、Gemini に貼り付けて使うペルソナ。
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+ジェムは Claude Code スキルではありません。[Gemini Gems](https://gemini.google.com/gems) の永続的なシステムプロンプトで、Gemini に貼り付けることで特定のアシスタントペルソナに変えます。このハブではそのプロンプトをホストしているので、自分の Gemini ワークスペースにコピーして使えます。
+
+## スキルとの違い
+
+| | スキル | ジェム |
+|---|---|---|
+| エージェント | Claude Code | Gemini |
+| インストール | `gh skill install ...` | Gemini Gem にプロンプトを貼り付け |
+| 保存先 | `.claude/skills/` | Gemini アカウント |
+| プロジェクトファイル読み取り | 可（allowed-tools フロントマター付き） | 不可 — Gemini の連携が提供するもののみ |
+| 呼び出し方 | `/skill-name` または自然文 | Gemini チャットで Gem を開く |
+
+## ジェムの使い方
+
+<Steps>
+
+1. **Gemini Gems を開く。** [gemini.google.com/gems](https://gemini.google.com/gems) にアクセスして「Create Gem」をクリック。
+
+2. **プロンプトをコピー。** 各ジェムのページには GitHub 上の生プロンプトへの「ソース」リンクがあります。全文をコピーしてください。
+
+3. **Gem の instructions に貼り付け。** Gem 作成 UI の instructions フィールドにプロンプトを貼り付けます。Gem に名前を付け（例: 「Daily Briefing」）、任意で説明を追加します。
+
+4. **必要なら連携を承認。** `daily-briefing` のような Gem は Gemini の Google カレンダーと Gmail コネクタへのアクセスが必要です。初回利用時に権限を付与してください。
+
+5. **保存して使う。** Gem が Gemini のサイドバーに表示されます。開いて起動フレーズ（daily-briefing なら `start`）を入力すると、アシスタントがペルソナで動作します。
+
+</Steps>
+
+<Aside type="caution" title="ハードコードされた日付や例">
+一部のジェム（特に `daily-briefing`）は、プロンプト内に例として日付やプレースホルダーが書かれています。貼り付ける前にプロンプトを読み、ハードコードされた値を必要なものに置き換えてください。
+</Aside>
+
+## 3 つのジェム
+
+<CardGrid>
+  <LinkCard
+    title="daily-briefing"
+    href="/ja/gems/daily-briefing/"
+    description="Google カレンダーと Gmail を 2 つのきれいなセクションにまとめる朝のブリーフィング。"
+  />
+  <LinkCard
+    title="jp-communication-enhancer"
+    href="/ja/gems/jp-communication-enhancer/"
+    description="英語ドラフト → 3 段階のビジネス日本語と解説。"
+  />
+  <LinkCard
+    title="thumbnail-generator"
+    href="/ja/gems/thumbnail-generator/"
+    description="テック記事タイトル → 高 CTR サムネイル 2〜3 案、サードパーティロゴなし。"
+  />
+</CardGrid>
+
+## なぜジェムがあるのか
+
+スキルは多くのことができますが、画像生成はできず、セットアップなしで Google のカレンダー / Gmail API を叩けず、Gemini の Workspace 連携の内側には住めません。これら 3 つのユースケースには Gemini Gems が適切なツールなので、プロンプトを別の場所にではなくスキルと同じここに置いています。

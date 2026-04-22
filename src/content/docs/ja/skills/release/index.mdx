@@ -1,0 +1,97 @@
+---
+title: release
+description: リリース作業を一気通貫で自動化する Claude Code スキル。リポジトリ判定、プリフライトチェック、GitHub Issue 作成、コミット、タグ、プッシュ、リリースノート — すべてステップごとに確認を取りながら。
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../../../components/InstallCommand.astro';
+
+リリースで手順を忘れないために。リポジトリの種類を判定し、モード別のプリフライトチェックを実行し、GitHub Issue を作成し、コミット・タグ・プッシュし、リリースノートをドラフトします — リモート状態を変更するステップはすべて確認を取ります。
+
+<InstallCommand slug="release" />
+
+## 何をするか
+
+手作業のリリースは「忘れるチェックリスト」です。CHANGELOG を更新したか？ Issue を作ったか？ 正しい SHA にタグを付けたか？ タグをプッシュしたか？ リリースノートを正しい言語で書いたか？ このスキルはすべてを 3 フェーズ（プリフライト → Issue → リリース）のフローにまとめ、リモート状態に触るステップを `AskUserQuestion` でゲートします。
+
+リポジトリの種類を判定します — `skills-gems`、`npm`、`python`、`monorepo`、`generic`。モード別のプリフライト（npm なら `npm test`、Python なら `uv run pytest` など）を実行します。GitHub Issue とマイルストーンを作成し、バージョンアップを確認し、テンプレートから plan ファイルをドラフトし、コミット・タグ・プッシュし、GitHub リリースをドラフトします — すべて選択した言語（英語、日本語、その他）で。
+
+初回実行時は、言語・リポジトリモード・プリフライト確認要否の設定を `.claude/skills/release/config.json` に保存するか確認します。次回以降は検出プロンプトがスキップされます。
+
+フル 13 ステップ、モード別プリフライト、エラーハンドリング表は [リファレンス](/ja/skills/release/reference/) を参照してください。
+
+## 使いどころ
+
+- リリース頻度が不定期で、チェックリストが記憶から抜け落ちるとき
+- 複数リポジトリ（npm、Python、skills-gems）を管理していて、どれでも同じ筋肉記憶で動かしたいとき
+- バイリンガルのリリースノートを毎回手翻訳したくないとき
+- すべてのリリースに Issue、plan ファイル、タグ、GitHub リリースノートを一貫して付けたいとき
+
+<Aside type="caution" title="向いていないケース">
+GitHub（`gh` CLI）と main ブランチワークフロー前提のスキルです。GitLab、Bitbucket、リリースブランチ方式には、プリフライトパターンの書き換えが必要です。
+</Aside>
+
+## 動作の流れ
+
+<Steps>
+
+1. **Phase 0 — 判定。** `package.json`、`pyproject.toml`、`skills/`、直近の変更を確認してリポジトリを分類。検出モードを確認、または上書き。
+
+2. **Phase 1 — プリフライト。** モード別チェック（テスト、lint、README/CHANGELOG の同期）を実行。失敗したらスキルは停止 — 修正して再実行。
+
+3. **Phase 2 — Issue。** 言語、タイトル、ラベル、バージョンアップ（patch/minor/major/skip）を選択。plan ファイルをドラフトし、必要なら milestone を作成し、GitHub Issue を開きます。
+
+4. **Phase 3 — リリース。** ステータスチェック、コミット、タグ、プッシュ、GitHub リリース作成 — それぞれ `AskUserQuestion` でゲート。リリースノートは選択した言語の plan ファイルから生成。
+
+5. **Phase 4 — クローズ。** Issue をリリースへのリンク付きでクローズ（バージョンスキップの場合はコミットへのリンク）。初回は設定を `config.json` に保存するか確認。
+
+</Steps>
+
+## 使用例
+
+`skills/` 配下を変更したフィーチャーブランチで作業完了。
+
+```
+/release
+```
+
+スキルは `skills-gems` モードを検出、プリフライト（README/CHANGELOG チェック）を実行、言語（英語）とタイトル（候補 3 件 + 「Other」）を確認、patch バンプ（`v0.3.1`）を選択、`.plans/add-xyz-skill.md` をドラフト、`enhancement` ラベル + milestone `v0.3.1` で Issue #42 を作成、そして：
+
+> Issue created: https://github.com/oharu121/skills/issues/42 — proceeding with release automation...
+
+`feat(skills): add xyz skill (#42)` でコミット、`v0.3.1` をタグ付け、両方プッシュ、plan をノート本文として GitHub リリースを作成、`Released in v0.3.1` で Issue をクローズ。
+
+## リポジトリモード
+
+| モード | トリガー | プリフライトの焦点 |
+|---|---|---|
+| `skills-gems` | `skills/` ディレクトリ変更 | README/CHANGELOG の同期、skill lint |
+| `npm` | `package.json` あり | `npm test`、lint |
+| `python` | `pyproject.toml` または `uv.lock` | `uv run pytest`、lint |
+| `monorepo` | 上記のうち 2 つ以上 | モジュール別プリフライト |
+| `generic` | どれにも該当しない | 最小限のチェック |
+
+## 設定ファイル
+
+初回実行時、以下の保存を確認します（`.claude/skills/release/config.json`）：
+
+```json
+{
+  "language": "en",
+  "repo_mode": "skills-gems",
+  "preflight_confirm": false
+}
+```
+
+設定すると、検出・言語プロンプトがスキップされ、プリフライトは確認なしで静かに実行されます。
+
+## 関連スキル
+
+<CardGrid>
+  <LinkCard title="devio" href="/ja/skills/devio/" description="記事シリーズのリリース？ devio と組み合わせて公開 + タグ整合を取る。" />
+  <LinkCard title="generate-bruno-files" href="/ja/skills/generate-bruno-files/" description="Bruno ファイルの再生成をリリースプリフライトの一部に。" />
+</CardGrid>
+
+## ソース
+
+[`SKILL.md` を GitHub で見る](https://github.com/oharu121/skills/blob/main/skills/release) — ワークフロー全体、モード別プリフライトパターン、テンプレート、エラーハンドリング。13 ステップの詳細は [リファレンス](/ja/skills/release/reference/)。

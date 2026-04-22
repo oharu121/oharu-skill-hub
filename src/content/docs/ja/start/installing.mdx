@@ -1,0 +1,92 @@
+---
+title: スキルのインストール
+description: oharu121/skills リポジトリから Claude Code スキルをインストールする方法 — gh、npx、pnpm のどれでも同じ Agent Skills 仕様を読み込みます。
+---
+
+import { Tabs, TabItem, Steps, Aside } from '@astrojs/starlight/components';
+
+このハブのすべてのスキルは、オープンな [Agent Skills 仕様](https://agentskills.io) に準拠しており、対応するどの CLI からでもインストールできます。お好みのものを選んでください — 結果は同じです。
+
+## パッケージマネージャを選ぶ
+
+<Tabs syncKey="pm">
+  <TabItem label="gh">
+    公式 GitHub CLI 拡張（v2.90+）。インストール前にプレビューできます。
+
+    ```bash
+    gh skill install oharu121/skills <name>
+    ```
+
+    先にプレビュー：
+
+    ```bash
+    gh skill preview oharu121/skills <name>
+    ```
+  </TabItem>
+  <TabItem label="npx">
+    Node / npm ユーザー向け。グローバルインストール不要。
+
+    ```bash
+    npx skills add oharu121/skills/<name>
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    pnpm ユーザー向け。`pnpm dlx` は `npx` と同等。
+
+    ```bash
+    pnpm dlx skills add oharu121/skills/<name>
+    ```
+  </TabItem>
+</Tabs>
+
+`<name>` はスキルのスラッグ（例: `aws-architecture-diagram`）に置き換えてください。
+
+## スコープ: プロジェクト or ユーザー
+
+デフォルトでは、現在のプロジェクトの `.claude/skills/` にインストールされます。ユーザースコープ（`~/.claude/skills/` に入れて全プロジェクトで使える）にするには `-g`：
+
+```bash
+gh skill install -g oharu121/skills <name>
+npx skills add -g oharu121/skills/<name>
+```
+
+どちらが適切かはスキルによります。
+
+- **プロジェクトスコープ** — スキルがプロジェクトファイルを読む場合（generate-bruno-files、devio、release）
+- **ユーザースコープ** — パーソナルヘルパーの場合（aws-architecture-diagram、aws-cost-estimate）
+
+## 更新と削除
+
+<Steps>
+
+1. **更新** — 同じコマンドを再実行して最新版を取得、または明示的な update コマンド：
+
+   ```bash
+   gh skill update oharu121/skills/<name>
+   npx skills update oharu121/skills/<name>
+   ```
+
+2. **削除** — 逆コマンド：
+
+   ```bash
+   gh skill remove oharu121/skills/<name>
+   npx skills remove oharu121/skills/<name>
+   ```
+
+</Steps>
+
+## どのエージェントで動くか
+
+主要ターゲット: **Claude Code**（Anthropic の公式 CLI）。一部のスキルは Claude 固有のフロントマター（`user-invocable: true` など）を使っており、これにより `/skill-name` スラッシュコマンドとして呼び出せます。
+
+副次ターゲット: `gh skill` / `npx skills` CLI がサポートするすべてのエージェント。どちらも `.claude/`、`.cursor/`、`.codex/` など 40 種類以上のエージェントディレクトリを自動検出します。他のエージェント環境でもスキルは動作しますが、`AskUserQuestion` がプレーンテキストプロンプトに劣化したり、`/skill-name` 形式の呼び出しが使えなかったりする場合があります。
+
+<Aside type="tip">
+スキルの README に `/skill-name` スラッシュコマンドが書かれていれば、Claude Code を使っています。他のエージェントでは、スキル名やファイルパスで直接呼び出してください — スキルの挙動自体は変わりません。
+</Aside>
+
+## スキルごとの初回セットアップ
+
+スキルによっては初回実行時にセットアップが必要です（`bedrock-ops` は `aws-project.json` が必要、`release` は `config.json` への設定保存を提案）。セットアップ手順は各スキルのページの「How it works」または「Setup」に記載しています。
+
+インストールが済んだら、[スキル一覧](/ja/skills/) からカタログを見てください。

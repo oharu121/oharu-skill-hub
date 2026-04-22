@@ -1,0 +1,147 @@
+---
+title: Reference — release
+description: The full 13-step release workflow, per-mode pre-flight patterns, config schema, and error-handling matrix for the release skill.
+sidebar:
+  label: Reference
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This page documents the skill's internal workflow. You don't need to read it to *use* the skill — it's here for when you want to understand what's happening, extend the patterns, or debug a failure.
+
+## 13-step workflow
+
+The skill runs in three phases with 13 total steps. Every step that mutates remote state is gated by `AskUserQuestion`.
+
+### Phase 0 — Repo Detection
+
+**Step 0.** Check `package.json`, `pyproject.toml`, `uv.lock`, `skills/`, and `git status --short`. Classify into `skills-gems`, `npm`, `python`, `monorepo`, or `generic`. If `repo_mode` is set in config, detection is skipped.
+
+### Phase 1 — Pre-flight
+
+**Step 1.** Read and execute the pattern file at `patterns/<mode>.md`. Pre-flight always runs — `preflight_confirm: false` only skips the confirmation gate, not the checks.
+
+### Phase 2 — Issue Creation
+
+**Step 2. Gather context** — from the session, identify what was implemented, which files changed, key changes, any breaking changes.
+
+**Step 2.5. Language** — `AskUserQuestion`: English, Japanese, or Other. Applied to plan, issue body, and release notes (commit messages always English).
+
+**Step 3. Title** — three suggestions plus "Other" for free input.
+
+**Step 4. Labels** — multi-select: enhancement, bug, documentation, refactor, or custom.
+
+**Step 5. Version** — `git describe --tags --abbrev=0` to find the current tag. Choose patch / minor / major / skip. Always prefixed `v`.
+
+**Step 6. Plan file** — create `.plans/<slugified-title>.md` from `templates/plan.md`. Prose in selected language, headings in English.
+
+**Step 7. GitHub issue** — ensure milestone exists (`gh api repos/{owner}/{repo}/milestones`), create issue with labels, milestone, and body from `templates/issue-body.md`.
+
+**Step 8. Commit message** — `feat(<scope>): <description> (#<issue-number>)` (or `fix()`, `docs()`, `refactor()`).
+
+### Phase 3 — Release Automation
+
+**Step 9. Remote status** — `git fetch && git rev-list --count HEAD..@{u}`. If remote has new commits, prompt to `pull --rebase`.
+
+**Step 9.5. README + CHANGELOG sync** — check whether the release's changes require README or CHANGELOG updates. Edit inline before committing.
+
+**Step 10. Commit** — show `git status --short`, propose the commit message, confirm, then `git add . && git commit`.
+
+**Step 11. Tag** — `git tag v<new-version>` (skipped if version was skipped).
+
+**Step 12. Push** — `git push && git push --tags`, confirmed first.
+
+**Step 13. GitHub release** — `gh release create v<version> --title "..." --notes "..."` with plan content as the body. Close issue with `Released in v<version>` or `Shipped in <sha>`.
+
+**Save config** — if `config.json` didn't exist at startup, prompt to save preferences.
+
+## Per-mode pre-flight
+
+### skills-gems
+
+- Verify all skills under `skills/` have a valid `SKILL.md` with frontmatter
+- Check README skill table lists every skill directory (and no stale entries)
+- Check `CHANGELOG.md` has an entry for the current version
+
+### npm
+
+- Run `npm test`
+- Check `package.json` version matches the intended bump
+- Check `README.md` installation instructions use current package name
+
+### python
+
+- Run `uv run pytest` (or `pytest` if not a `uv` project)
+- Check `pyproject.toml` version matches
+- Verify `README.md` imports match current module layout
+
+### monorepo
+
+- Detect which sub-projects changed
+- Run the relevant per-mode pre-flight for each changed sub-project
+- Abort if any fail
+
+### generic
+
+- Check for uncommitted changes
+- Check for untracked files that might need staging
+- Minimal sanity — this mode is a fallback, not a safety net
+
+## Config file schema
+
+Location: `.claude/skills/release/config.json` (project-root relative).
+
+```json
+{
+  "language": "en",
+  "repo_mode": "skills-gems",
+  "preflight_confirm": false
+}
+```
+
+| Field | Effect |
+|---|---|
+| `language` | Skip Step 2.5; use this language directly |
+| `repo_mode` | Skip Phase 0 detection; use this mode |
+| `preflight_confirm: false` | Skip the confirmation gate; pre-flight runs silently |
+
+All fields are optional. Missing fields fall back to the interactive flow.
+
+## Error handling
+
+| Scenario | Action |
+|---|---|
+| Remote fetch fails | Warn and continue |
+| Pull produces conflicts | Stop; instruct user to resolve manually |
+| Pre-flight fails | Stop; `AskUserQuestion`: skip pre-flight or fix? |
+| Commit fails | Stop (likely pre-commit hook); user fixes and reruns |
+| Tag already exists | Stop; `AskUserQuestion` with next-version suggestion |
+| Push fails | Warn; show the manual `git push && git push --tags` command |
+| `gh` not installed | Warn; provide the manual release URL |
+| Rate-limited GitHub API | Wait and retry is safe; surface the error |
+
+## Output format
+
+### With version
+
+```
+Release complete!
+
+- Issue:   [#42](https://github.com/oharu121/skills/issues/42)
+- Version: v0.3.0 → v0.3.1
+- Tag:     v0.3.1
+- Release: [v0.3.1](https://github.com/oharu121/skills/releases/tag/v0.3.1)
+```
+
+### Without version (skipped)
+
+```
+Changes committed and pushed!
+
+- Issue:  [#42](https://github.com/oharu121/skills/issues/42)
+- Commit: feat(skills): add xyz skill (#42)
+
+No version tag or GitHub release (skipped).
+```
+
+Output always uses plain markdown prose (not a fenced code block) so links are clickable in the IDE.

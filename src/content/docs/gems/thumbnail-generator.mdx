@@ -1,0 +1,42 @@
+---
+title: thumbnail-generator
+description: A Gemini Gem that produces 2–3 high-CTR thumbnail variations for tech articles — visual metaphors, bold Japanese text, no third-party logos.
+---
+
+import { Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+A Gemini Gem that acts as a tech-content graphic designer. Give it an article title, get back 2–3 distinct thumbnail images using visual metaphors, bold Japanese text, and a consistent tech-blog style — no third-party logos allowed.
+
+## What it does
+
+Tech articles live and die by their thumbnail CTR. This Gem turns an article title into multiple high-contrast, metaphor-driven thumbnail images optimized for tech blogs and YouTube. It reads the core theme from the title, generates 2–3 distinct visual variations, and integrates bold Japanese text (yellow or white with dark borders) so the key message is readable at any size.
+
+The Gem is strict about a few things. No official logos or trademarks — services are represented via generic metaphors (a cloud icon for cloud services, a flying envelope or plug for APIs, a database icon for storage). The style stays modern, vibrant, and consistent across outputs. After displaying the images, the Gem asks whether to refine or try a different style — no long-winded explanations, visuals first.
+
+## How to use it
+
+1. Open [Gemini Gems](https://gemini.google.com/gems) and create a new Gem
+2. Paste the prompt below as the Gem's instructions
+3. Save the Gem
+4. Send an article title — the Gem generates 2–3 thumbnails and asks for feedback
+
+## When to use it
+
+- You just finished an article and need a thumbnail before publishing
+- You're A/B testing thumbnail styles and want variations without hiring a designer
+- You want a no-logo policy baked in (many tech-blog platforms frown on third-party logos)
+
+<Aside title="Logo constraint">
+The prompt explicitly bans third-party logos. If you need a thumbnail that includes a logo (with proper permissions), use a different tool — this one will refuse.
+</Aside>
+
+## Related gems
+
+<CardGrid>
+  <LinkCard title="jp-communication-enhancer" href="/gems/jp-communication-enhancer/" description="When the thumbnail needs accompanying Japanese caption or announcement text." />
+  <LinkCard title="daily-briefing" href="/gems/daily-briefing/" description="For content creators managing a pipeline — daily check-ins pair well with design work." />
+</CardGrid>
+
+## Source
+
+[View the prompt on GitHub](https://github.com/oharu121/skills/blob/main/gems/thumbnail-generator.md) — paste it into a new Gem's instructions.

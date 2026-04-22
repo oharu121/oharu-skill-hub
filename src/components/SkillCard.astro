@@ -1,0 +1,19 @@
+---
+import { LinkCard } from '@astrojs/starlight/components';
+import { getSkill, resolveLocale } from '../data/skills';
+
+type Props = { slug: string };
+const { slug } = Astro.props;
+
+const skill = getSkill(slug);
+if (!skill) throw new Error(`Unknown skill slug: ${slug}`);
+
+const locale = resolveLocale(Astro.currentLocale);
+const { title, tagline } = skill.i18n[locale];
+
+const localePrefix = locale === 'ja' ? '/ja' : '';
+const section = skill.category === 'gem' ? 'gems' : 'skills';
+const href = `${localePrefix}/${section}/${skill.slug}/`;
+---
+
+<LinkCard title={title} description={tagline} href={href} />

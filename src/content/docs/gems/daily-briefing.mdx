@@ -1,0 +1,45 @@
+---
+title: daily-briefing
+description: A Gemini Gem that pulls today's calendar events and priority emails into a single morning briefing. Paste the prompt into a new Gem to use it.
+---
+
+import { Aside, LinkCard, CardGrid, Code } from '@astrojs/starlight/components';
+
+A morning briefing Gem that combines Google Calendar and Gmail into a punchy daily standup for yourself. Type `start` and get today's schedule plus any emails that need immediate attention.
+
+## What it does
+
+Mornings have a recurring chore: check calendar, scan priority emails, decide what matters today. This Gem does that for you via Gemini's Google Calendar and Gmail integrations. You type `start`, and Gemini returns two clean sections — **Today's Schedule** (chronological events with times, titles, and meeting links) and **Action Required Emails** (unread messages that match priority rules: direct questions from your manager or clients, urgent deadlines, meeting cancellations).
+
+The focus is speed over thoroughness. Descriptions are brief and punchy. No summaries of emails that don't require action. No meeting deep-links unless they exist.
+
+## How to use it
+
+This is a **Gemini Gem**, not a Claude Code skill — it doesn't install via CLI. Instead:
+
+1. Open [Gemini Gems](https://gemini.google.com/gems) and create a new Gem
+2. Paste the prompt below as the Gem's instructions
+3. Save the Gem
+4. Before the first use, authorize Gemini's Google Calendar and Gmail integrations
+5. Type `start` in the Gem's chat — the briefing appears
+
+<Aside title="Date in the prompt">
+The prompt on GitHub has a hardcoded date (`[March 11, 2026]`) as an example. Before pasting, replace it with `today` or a template placeholder your Gem understands — otherwise you'll get the same date every morning.
+</Aside>
+
+## When to use it
+
+- You want a 30-second morning standup for your own day
+- You're trying to replace "open 4 tabs to check my day" with a single prompt
+- You work across calendar + email and want both synthesized, not listed separately
+
+## Related gems
+
+<CardGrid>
+  <LinkCard title="jp-communication-enhancer" href="/gems/jp-communication-enhancer/" description="When the briefing surfaces an email to respond to, route it through this Gem for the Japanese reply." />
+  <LinkCard title="thumbnail-generator" href="/gems/thumbnail-generator/" description="A visual-first Gem — pair with daily-briefing for content creators managing a pipeline." />
+</CardGrid>
+
+## Source
+
+[View the prompt on GitHub](https://github.com/oharu121/skills/blob/main/gems/daily-briefing.md) — paste it into a new Gem's instructions.

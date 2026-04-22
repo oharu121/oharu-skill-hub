@@ -1,0 +1,51 @@
+---
+title: ようこそ
+description: Oharu スキルハブとは — 私が作っている Claude Code スキルと Gemini ジェムを、コピペできるインストールコマンドと語り口のガイドでまとめたサイトです。
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+ここは私が日々作って使っている、カスタム Claude Code スキルと Gemini ジェムのドキュメントハブです。[スキルリポジトリ](https://github.com/oharu121/skills) の「使い方」コンパニオン — SKILL.md から自動生成ではなく、手書きで書いています。
+
+## 何があるか
+
+- **7 つの Claude Code スキル** — Claude Code にドメイン特化ワークフローを追加するインストール可能なパッケージ（AWS 設計、コスト見積もり、Bedrock 運用、リリース自動化など）
+- **3 つの Gemini ジェム** — Gemini に貼り付けて使うシステムプロンプト（朝のブリーフィング、日本語ビジネスコミュニケーション、テック記事サムネイル）
+- **コピペ可能なインストールコマンド** — `gh skill`、`npx skills`、`pnpm dlx skills` に対応
+- **バイリンガル** — すべてのページが英語と日本語で読めます
+
+## どこから始めるか
+
+<CardGrid>
+  <LinkCard
+    title="スキルをインストール"
+    href="/ja/start/installing/"
+    description="CLI ベースのインストール方法と、どのパッケージマネージャを選ぶか。"
+  />
+  <LinkCard
+    title="Gemini ジェムを使う"
+    href="/ja/start/gems/"
+    description="ジェムは CLI でインストールしません — Gemini に貼り付けるフロー。"
+  />
+  <LinkCard
+    title="共通ルール"
+    href="/ja/start/conventions/"
+    description="AskUserQuestion、セーフティガード、日本語出力オプションなど、全スキル共通の作法。"
+  />
+  <LinkCard
+    title="スキル一覧"
+    href="/ja/skills/"
+    description="AWS とワークフローに分類された全カタログ。"
+  />
+</CardGrid>
+
+## 設計思想
+
+ここに並ぶスキルとジェムは、いくつかの原則を共有しています。
+
+- **リモート状態を触る前に必ず確認** — 破壊的なステップはすべて `AskUserQuestion` 経由、プレーンテキストのプロンプトは使わない
+- **推測せず、常に検証** — AWS 系スキルは価格やアイコンを実行時に参照し、記憶データは使わない
+- **身元不一致は大きな音で失敗** — 「自分のアカウント」に閉じた操作で、アクティブな AWS プロファイルが違う場合は即エラー
+- **バイリンガル前提** — 英語と日本語はどちらも一級市民
+
+この作法が自分の働き方に合うと感じるなら、これらのスキルはフィットします。そうでなければ、インストールする価値は薄いかもしれません。

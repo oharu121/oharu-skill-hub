@@ -1,0 +1,87 @@
+---
+title: aws-architecture-diagram
+description: A Claude Code skill that generates Draw.io architecture diagrams with accurate, icon-faithful AWS service shapes — with a dedicated non-technical audience mode.
+---
+
+import { Aside, Steps, LinkCard, CardGrid, Badge } from '@astrojs/starlight/components';
+import InstallCommand from '../../../../components/InstallCommand.astro';
+
+Generate Draw.io architecture diagrams with accurate AWS service icons. Ask Claude Code to design the diagram, and the skill produces a `.drawio` file plus a companion markdown guide.
+
+<InstallCommand slug="aws-architecture-diagram" />
+
+## What it does
+
+AWS architecture diagrams are tedious to draw by hand: you spend more time hunting for the right service icon than thinking about the architecture. This skill closes that gap. You describe the system in plain language — "a three-tier web app on ECS behind CloudFront with Aurora Postgres" — and Claude Code produces a Draw.io file with the official AWS icon set, correctly grouped into AWS Cloud → Region → VPC → Subnet hierarchies, with labelled arrows showing data flow.
+
+Every icon is looked up in a bundled reference so colors and shape names are never guessed. The output is a real Draw.io XML file you can open, tweak, and export. Alongside it, the skill writes a markdown companion guide that explains each component, the data flows, and the key design decisions — useful for PRs, RFCs, or onboarding docs.
+
+A dedicated **non-technical audience mode** rewrites the diagram for stakeholders: technical labels become circled step numbers, swim lanes with flow summaries replace dense clouds of boxes, and everything renders cleanly against a light background so exported PNGs work in slide decks.
+
+## When to use it
+
+- You're drafting an RFC or proposal and need an accurate architecture diagram without spending an hour in draw.io
+- You have an existing diagram that needs updates, and you want the changes expressed in plain language rather than drag-and-drop
+- You want the same architecture rendered for two audiences — a technical version for the team and a simplified version for stakeholders — without redrawing from scratch
+- You need bilingual labels (English and Japanese) rendered consistently across diagram, title, legend, and companion guide
+
+<Aside type="caution" title="When not to use it">
+This is for *communication* diagrams, not automation. If you need infrastructure as code (CloudFormation, Terraform), reach for a different tool. The diagram is a picture, not a source of truth.
+</Aside>
+
+## How it works
+
+<Steps>
+
+1. **Describe the architecture.** Tell Claude what services are involved, the pattern (three-tier, event-driven, RAG, etc.), and the audience — technical or non-technical. Claude asks via `AskUserQuestion` for anything that's unclear, including the output language (English or 日本語).
+
+2. **Icon lookup.** The skill reads its bundled icon references (Compute, Storage, Networking, App Integration, Analytics, Security, Common) to get the exact Draw.io shape names and category colors. No icon is ever guessed.
+
+3. **Layout planning.** The skill plans the nesting (AWS Cloud → Region → VPC → Subnet), primary flow direction, and where auxiliary services live, using the bundled layout guidelines for spacing and style.
+
+4. **XML generation.** The diagram is assembled from the base template using documented patterns for service icons, dedicated shapes, group containers, and edges. Category color discipline is enforced — compute is always orange, storage is always green, etc.
+
+5. **Output.** The skill writes `docs/<slug>.drawio` and a companion `docs/<slug>.md` that walks through components, data flows, and design decisions in your chosen language.
+
+</Steps>
+
+## Example
+
+Ask Claude Code:
+
+> Generate a diagram for a realtime data pipeline: EventBridge receives events, routes to Kinesis, a Lambda processor writes to S3 for archival and DynamoDB for hot reads. Target audience: engineering team.
+
+Claude produces two files in `docs/`:
+
+- `realtime-data-pipeline.drawio` — open in Draw.io to verify and edit
+- `realtime-data-pipeline.md` — the companion guide
+
+The diagram uses the right icons (Lambda in orange, S3 in green, DynamoDB in purple), wraps everything in an AWS Cloud group, and labels each edge with the protocol or flow step.
+
+<Aside title="Screenshots">
+Terminal invocation and a rendered Draw.io diagram will be added here — see [`src/assets/skills/aws-architecture-diagram/`](https://github.com/oharu121/oharu-skill-hub) for placeholders.
+</Aside>
+
+## Audience modes
+
+The skill supports two audience modes, selected per invocation:
+
+| Mode | Labels | Layout | Best for |
+|---|---|---|---|
+| **Technical** | Protocol names, service types, API names | Nested groups, dense | Engineering reviews, RFCs |
+| **Non-technical** | Circled step numbers, plain descriptions | Swim lanes with flow summaries | Stakeholder decks, onboarding |
+
+Non-technical mode also drops technical qualifiers ("OpenSearch" instead of "OpenSearch Serverless", "検索データベース" instead of "k-NNベクトルインデックス") so the diagram reads without domain knowledge.
+
+For the full icon palette, layout rules, VPC patterns, and color discipline, see the [Reference](/skills/aws-architecture-diagram/reference/).
+
+## Related skills
+
+<CardGrid>
+  <LinkCard title="aws-cost-estimate" href="/skills/aws-cost-estimate/" description="Once you have a diagram, price it. Shares the same architecture input." />
+  <LinkCard title="bedrock-ops" href="/skills/bedrock-ops/" description="For Bedrock KB + S3 pipelines, operate what you've just designed." />
+</CardGrid>
+
+## Source
+
+[View `SKILL.md` on GitHub](https://github.com/oharu121/skills/blob/main/skills/aws-architecture-diagram) — the agent-facing instructions, icon references, and Draw.io template.

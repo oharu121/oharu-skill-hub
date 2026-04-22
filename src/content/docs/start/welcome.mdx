@@ -1,0 +1,51 @@
+---
+title: Welcome
+description: What the Oharu Skill Hub is — a site documenting the Claude Code skills and Gemini gems I build, with copy-paste install commands and narrative guides.
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+This is the documentation hub for the custom Claude Code skills and Gemini gems I build and use every day. It's the "how to use" companion to the [skills repo](https://github.com/oharu121/skills) — written by hand, not auto-generated from SKILL.md files.
+
+## What's here
+
+- **7 Claude Code skills** — installable packages that extend Claude Code with domain-specific workflows (AWS design, cost estimation, Bedrock ops, release automation, and more)
+- **3 Gemini gems** — paste-in-Gemini system prompts for morning briefings, Japanese business communication, and tech article thumbnails
+- **Copy-paste install commands** — for `gh skill`, `npx skills`, and `pnpm dlx skills`
+- **Bilingual content** — every page is available in English and 日本語
+
+## Where to start
+
+<CardGrid>
+  <LinkCard
+    title="Install a skill"
+    href="/start/installing/"
+    description="How the CLI-based install works, and which package manager to pick."
+  />
+  <LinkCard
+    title="Use a Gemini gem"
+    href="/start/gems/"
+    description="Gems aren't installed via CLI — here's the paste-in-Gemini flow."
+  />
+  <LinkCard
+    title="Conventions"
+    href="/start/conventions/"
+    description="How I use AskUserQuestion, safety rails, and the Japanese output option across every skill."
+  />
+  <LinkCard
+    title="Browse all skills"
+    href="/skills/"
+    description="The full catalog, grouped by AWS and Workflows."
+  />
+</CardGrid>
+
+## Philosophy
+
+The skills and gems here share a few principles:
+
+- **Confirm before touching remote state** — every destructive step goes through `AskUserQuestion`, never a plain-text prompt
+- **Never guess, always verify** — the AWS skills look up prices and icons at runtime, never from memory
+- **Fail loudly on identity mismatch** — when an operation is scoped to "my account", I want a loud error if the active AWS profile isn't mine
+- **Bilingual by default** — English and 日本語 are first-class everywhere it makes sense
+
+If those match how you want to work, you'll get along with these skills. If not, they probably won't feel worth the install.

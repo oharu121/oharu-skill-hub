@@ -1,0 +1,48 @@
+---
+title: jp-communication-enhancer
+description: A Gemini Gem that transforms English drafts (or rough Japanese) into three levels of business Japanese — Slack, email, and formal — with cultural softeners and IT terminology.
+---
+
+import { Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+A Japanese communication Gem tailored for non-native developers working in Japanese IT teams. Draft in English (or rough Japanese), and the Gem returns three polished versions: Slack-friendly, standard email, and formal — with brief explanations of kanji choices and cultural softeners.
+
+## What it does
+
+Writing business Japanese as a non-native developer means three hard decisions per message: how formal, which technical terms, and how to soften a direct request. This Gem makes all three for you and shows its work.
+
+Every request returns exactly three versions:
+
+- **Level 1 — Slack / Teams** — internal, natural, efficient, frequent お疲れ様です
+- **Level 2 — Standard Business** — email to internal managers, formal meetings
+- **Level 3 — Formal** — external clients, upper management
+
+Alongside each version, the Gem integrates Japanese IT vocabulary actually used in dev teams (`起票`, `プルリク`, `コンフリクト`) rather than dictionary translations. When your input reads too direct for a Japanese context, it inserts クッション言葉 (softener phrases) and explains the nuance — for example, why it chose ご教示 over 教えて.
+
+## How to use it
+
+1. Open [Gemini Gems](https://gemini.google.com/gems) and create a new Gem
+2. Paste the prompt below as the Gem's instructions
+3. Save the Gem
+4. In chat, paste your English draft or rough Japanese — the Gem returns three versions with explanations
+
+## When to use it
+
+- You're about to send a message to a Japanese colleague, manager, or client and want it to sound natural, not translated
+- You drafted something in English that feels too direct and need the polite equivalent
+- You want to learn *why* a phrasing works — the Gem explains kanji and verb choices briefly
+
+<Aside type="tip">
+Paste the Gem's Level 1/2/3 outputs back into the same chat and ask "which is right for [context]?" — the Gem will help you pick.
+</Aside>
+
+## Related gems
+
+<CardGrid>
+  <LinkCard title="daily-briefing" href="/gems/daily-briefing/" description="When the morning briefing surfaces an email to reply to, draft the response here." />
+  <LinkCard title="thumbnail-generator" href="/gems/thumbnail-generator/" description="For bilingual tech blogs, pair Japanese writing with the thumbnail generator." />
+</CardGrid>
+
+## Source
+
+[View the prompt on GitHub](https://github.com/oharu121/skills/blob/main/gems/jp-communication-enhancer.md) — paste it into a new Gem's instructions.

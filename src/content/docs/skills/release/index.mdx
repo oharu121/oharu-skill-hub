@@ -1,0 +1,97 @@
+---
+title: release
+description: A Claude Code skill that orchestrates a full release — repo detection, pre-flight checks, GitHub issue creation, commit, tag, push, and release notes — all with per-step confirmation.
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../../components/InstallCommand.astro';
+
+Ship a release without forgetting a step. This skill detects your repo type, runs mode-specific pre-flight checks, creates the GitHub issue, commits, tags, pushes, and drafts release notes — pausing to confirm at every destructive step.
+
+<InstallCommand slug="release" />
+
+## What it does
+
+Releasing by hand is a checklist people forget. Did you update the CHANGELOG? Create the issue? Tag the right SHA? Push the tag? Write release notes in the right language? This skill turns all of that into a three-phase flow (Pre-flight → Issue → Release) with `AskUserQuestion` gating every step that touches remote state.
+
+The skill detects what kind of repo you're in — `skills-gems`, `npm`, `python`, `monorepo`, or `generic` — and runs mode-specific pre-flight (e.g., `npm test` for npm, `uv run pytest` for Python). It creates the GitHub issue and milestone, prompts for version bump, drafts a plan file from a template, commits, tags, pushes, and drafts the GitHub release — all in the language you choose (English, Japanese, or anything else).
+
+If it's your first run, the skill offers to save preferences (language, repo mode, whether to confirm pre-flight) into `.claude/skills/release/config.json` so subsequent releases skip the detection prompts.
+
+See the [Reference](/skills/release/reference/) for the full 13-step workflow, per-mode pre-flight scripts, and error-handling matrix.
+
+## When to use it
+
+- You release irregularly and the checklist drifts from your memory
+- You maintain multiple repos (npm, Python, skills-gems) and want one muscle memory across all of them
+- You ship bilingual release notes and don't want to translate by hand each time
+- You want every release to have an issue, a plan file, a tag, and GitHub release notes — consistently
+
+<Aside type="caution" title="When not to use it">
+This skill assumes GitHub (uses `gh` CLI) and a main branch workflow. For GitLab, Bitbucket, or release-branch workflows, pre-flight patterns would need to be rewritten.
+</Aside>
+
+## How it works
+
+<Steps>
+
+1. **Phase 0 — detection.** The skill checks `package.json`, `pyproject.toml`, `skills/`, and recent changes to classify the repo. You confirm the detected mode or override it.
+
+2. **Phase 1 — pre-flight.** The skill runs the mode-specific checks (tests, lint, README/CHANGELOG sync). If checks fail, the skill stops; you fix and rerun.
+
+3. **Phase 2 — issue.** You pick a language, title, labels, and version bump (patch/minor/major/skip). The skill drafts a plan file, creates the milestone if needed, and opens the GitHub issue.
+
+4. **Phase 3 — release.** Status check, commit, tag, push, and GitHub release creation — each gated by `AskUserQuestion`. Release notes come from the plan file, in the chosen language.
+
+5. **Phase 4 — close.** Issue closed with a link to the release (or to the commit if version was skipped). First run prompts to save preferences to `config.json`.
+
+</Steps>
+
+## Example
+
+You've finished a feature branch with changes under `skills/`. Run:
+
+```
+/release
+```
+
+The skill detects `skills-gems` mode, runs pre-flight (README/CHANGELOG checks), asks for language (English) and title (three suggestions + "Other"), picks a patch bump (`v0.3.1`), drafts `.plans/add-xyz-skill.md`, creates issue #42 with the `enhancement` label under milestone `v0.3.1`, and returns:
+
+> Issue created: https://github.com/oharu121/skills/issues/42 — proceeding with release automation...
+
+It commits `feat(skills): add xyz skill (#42)`, tags `v0.3.1`, pushes both, creates the GitHub release with plan notes as the body, and closes the issue with `Released in v0.3.1`.
+
+## Repo modes
+
+| Mode | Trigger | Pre-flight focus |
+|---|---|---|
+| `skills-gems` | `skills/` dir changed | README/CHANGELOG sync, skill lint |
+| `npm` | `package.json` present | `npm test`, lint |
+| `python` | `pyproject.toml` or `uv.lock` | `uv run pytest`, lint |
+| `monorepo` | Two or more of the above | Per-module pre-flight |
+| `generic` | None of the above | Minimal checks |
+
+## Config file
+
+First run offers to save preferences to `.claude/skills/release/config.json`:
+
+```json
+{
+  "language": "en",
+  "repo_mode": "skills-gems",
+  "preflight_confirm": false
+}
+```
+
+When set, detection and language prompts are skipped, and pre-flight runs silently without asking "Proceed?".
+
+## Related skills
+
+<CardGrid>
+  <LinkCard title="devio" href="/skills/devio/" description="Release an article series? Pair this with devio for publish + tag consistency." />
+  <LinkCard title="generate-bruno-files" href="/skills/generate-bruno-files/" description="Regenerate Bruno files as part of the release pre-flight." />
+</CardGrid>
+
+## Source
+
+[View `SKILL.md` on GitHub](https://github.com/oharu121/skills/blob/main/skills/release) — full workflow, per-mode pre-flight patterns, templates, and error handling. See the [Reference](/skills/release/reference/) for the 13-step detail.

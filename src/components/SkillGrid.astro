@@ -1,0 +1,14 @@
+---
+import { CardGrid } from '@astrojs/starlight/components';
+import { getSkillsByCategory, type Category } from '../data/skills';
+import SkillCard from './SkillCard.astro';
+
+type Props = { category: Category };
+const { category } = Astro.props;
+
+const entries = getSkillsByCategory(category);
+---
+
+<CardGrid>
+	{entries.map((skill) => <SkillCard slug={skill.slug} />)}
+</CardGrid>

@@ -1,0 +1,54 @@
+---
+title: Conventions
+description: Shared patterns across every skill in this hub — AskUserQuestion, safety rails, bilingual output, and the rules that stay consistent.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Every skill in this hub follows the same conventions. Once you've used one, the rest feel familiar.
+
+## AskUserQuestion, not plain text
+
+All user confirmations go through the `AskUserQuestion` tool — never a plain-text "Proceed? (y/n)" prompt. Why: plain-text prompts are easy to miss, don't offer structured options, and don't integrate with Claude Code's UI. `AskUserQuestion` gives you a clean multiple-choice UI with an "Other" escape hatch for free input.
+
+Practical effect: if a skill is about to do something irreversible (commit, push, `.env` overwrite, 1Password item creation), you'll see a structured prompt with explicit options. Approvals are per-step, not per-run.
+
+## Identity verification before writes
+
+Skills that touch cloud accounts (`bedrock-ops`) verify the active identity before any write operation. If `sts get-caller-identity` doesn't match the account ID in `aws-project.json`, the skill aborts rather than writing to the wrong account.
+
+This matters more than it sounds. "Oh, wrong profile" is a common mistake, and cloud mistakes are rarely free to undo.
+
+## Dry-run first, execute second
+
+S3 sync, S3 cp, and similar write operations always dry-run first and require an explicit `--execute` to actually mutate. You see what would change, confirm, then the real run happens. No silent destructive operations.
+
+## Language choice per run
+
+Skills that produce written output (release notes, cost reports, diagram companion guides, DevelopersIO articles) let you pick the language at the start of the run. Options are usually English, Japanese, and "Other" for free input.
+
+Commit messages are the exception — they always stay in English regardless of your language choice, following git convention.
+
+## Config files for repeat preferences
+
+The skills that have a lot of prompts on first run (`release`, `bedrock-ops`) offer to save preferences to a project-local `config.json` at the end of the first successful run. On subsequent runs, the prompts are skipped and the saved values are used.
+
+You can always override by editing or deleting the `config.json`.
+
+## Secrets never in Claude's context
+
+Skills that touch API tokens (`devio` with Contentful's CMA token, `migrate-env-to-1password` with 1Password credentials) use a helper script that reads the secret directly from the environment or `.env`. The token never enters Claude's context, so it can't accidentally end up in a log, a commit, or a paste.
+
+<Aside type="caution" title="This also means">
+When debugging a skill that interacts with secrets, the skill's "view" of those secrets is opaque to Claude. If you need to debug auth issues, check the helper script's own error output, not Claude's transcript.
+</Aside>
+
+## Frontmatter: `user-invocable`
+
+Skills with `user-invocable: true` in their SKILL.md frontmatter can be called as `/skill-name` slash commands in Claude Code. Not all skills are user-invocable — some are meant to be triggered implicitly when Claude detects a matching intent. Each skill's page notes whether it's user-invocable.
+
+## Japanese-flavored skills
+
+Two skills — `migrate-env-to-1password` and `devio` — have Japanese-heavy prompts and output. They're marked with a "Japanese" sidebar badge on the skill catalog. You can use them from any locale of this hub, but expect 日本語 in the interactive flow.
+
+If that's wrong for your team, the workaround is to fork and translate the prompts.

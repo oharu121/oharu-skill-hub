@@ -1,0 +1,62 @@
+---
+title: Using Gemini Gems
+description: How to use the gems in this hub — paste-in-Gemini personas, not CLI-installable packages.
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Gems are not Claude Code skills. They're [Gemini Gems](https://gemini.google.com/gems) — persistent system prompts you paste into Gemini to turn it into a specific assistant persona. This hub hosts the prompts so you can copy them into your own Gemini workspace.
+
+## The difference from skills
+
+| | Skills | Gems |
+|---|---|---|
+| Agent | Claude Code | Gemini |
+| Install | `gh skill install ...` | Paste prompt into Gemini Gem |
+| Lives in | `.claude/skills/` | Your Gemini account |
+| Can read project files | Yes (with allowed-tools frontmatter) | No — whatever Gemini's integrations provide |
+| Invocation | `/skill-name` or natural language | Open the Gem in Gemini chat |
+
+## How to use a gem
+
+<Steps>
+
+1. **Open Gemini Gems.** Go to [gemini.google.com/gems](https://gemini.google.com/gems) and click "Create Gem".
+
+2. **Copy the prompt.** Each gem's page has a "Source" link to the raw prompt on GitHub. Copy the full content.
+
+3. **Paste into the Gem's instructions.** In the Gem creation UI, paste the prompt into the instructions field. Give the Gem a name (e.g., "Daily Briefing") and optional description.
+
+4. **Authorize integrations if needed.** Gems like `daily-briefing` need access to Gemini's Google Calendar and Gmail connectors — grant the permissions on first use.
+
+5. **Save and use.** The Gem now shows up in your Gemini sidebar. Open it, type the activation phrase (e.g., `start` for daily-briefing), and the assistant runs the persona.
+
+</Steps>
+
+<Aside type="caution" title="Hardcoded dates and examples">
+Some gems (notably `daily-briefing`) have example dates or placeholders in the prompt. Read the prompt before pasting and replace any hardcoded values with what you actually want.
+</Aside>
+
+## The three gems
+
+<CardGrid>
+  <LinkCard
+    title="daily-briefing"
+    href="/gems/daily-briefing/"
+    description="Morning briefing pulling Google Calendar + Gmail into two clean sections."
+  />
+  <LinkCard
+    title="jp-communication-enhancer"
+    href="/gems/jp-communication-enhancer/"
+    description="English drafts → three levels of business Japanese with explanations."
+  />
+  <LinkCard
+    title="thumbnail-generator"
+    href="/gems/thumbnail-generator/"
+    description="Tech article titles → 2–3 high-CTR thumbnails, no third-party logos."
+  />
+</CardGrid>
+
+## Why gems at all?
+
+Skills do a lot, but they can't run image generation, can't hit Google's Calendar/Gmail APIs without setup, and don't live inside Gemini's Workspace integration. For those three use cases, Gemini Gems are the right tool — so the prompts live here alongside skills instead of in a separate place.

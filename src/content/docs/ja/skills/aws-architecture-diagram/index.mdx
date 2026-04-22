@@ -1,0 +1,87 @@
+---
+title: aws-architecture-diagram
+description: 正確な AWS サービスアイコンで Draw.io アーキテクチャ図を生成する Claude Code スキル。非エンジニア向けモードも搭載。
+---
+
+import { Aside, Steps, LinkCard, CardGrid, Badge } from '@astrojs/starlight/components';
+import InstallCommand from '../../../../../components/InstallCommand.astro';
+
+正確な AWS サービスアイコンを使って Draw.io アーキテクチャ図を生成します。Claude Code に「こんな構成で図を作って」と依頼すると、`.drawio` ファイルと解説用の Markdown が出力されます。
+
+<InstallCommand slug="aws-architecture-diagram" />
+
+## 何をするか
+
+AWS のアーキテクチャ図を手で描くのは地味に時間がかかります。正しいアイコンを探している時間のほうが、構成を考えている時間より長くなりがちです。このスキルはそのギャップを埋めます。「CloudFront の背後に ECS、Aurora Postgres の 3 階層構成」といった自然文で説明すると、Claude Code が Draw.io ファイルを作成します。公式 AWS アイコンセットを使い、AWS Cloud → Region → VPC → Subnet の階層で正しくグルーピングし、データフローを矢印で表現します。
+
+すべてのアイコンは同梱のリファレンスから引かれるため、色や形状名を推測することはありません。出力は実際の Draw.io XML ファイルなので、そのまま開いて編集・エクスポートできます。あわせて companion ガイドを Markdown で出力し、各コンポーネント、データフロー、設計判断を解説します。PR や RFC、オンボーディング資料にそのまま使えます。
+
+**非エンジニア向けモード**では、技術的なラベルを丸囲みの手順番号に置き換え、密な箱の並びの代わりにスイムレーンとフローサマリーを使い、PNG エクスポート時にスライド資料でそのまま使える明るい背景で描画します。
+
+## 使いどころ
+
+- RFC や提案書を書いていて、draw.io で 1 時間溶かさずに正確な構成図が欲しいとき
+- 既存の図に変更を加えたいが、ドラッグ操作ではなく自然文で指示したいとき
+- 同じアーキテクチャをエンジニア向けとステークホルダー向けの 2 バージョンで用意したいとき（ゼロから描き直し不要）
+- 図・タイトル・凡例・companion ガイドを英語と日本語でバイリンガル化したいとき
+
+<Aside type="caution" title="向いていないケース">
+これは *コミュニケーション用* の図を作るスキルです。インフラをコード化したい場合（CloudFormation、Terraform など）は別のツールを使ってください。図は「伝える」ためのものであり、真のソース・オブ・トゥルースではありません。
+</Aside>
+
+## 動作の流れ
+
+<Steps>
+
+1. **構成を説明する。** どの AWS サービスを使うか、パターン（3 階層、イベント駆動、RAG など）、想定読者（エンジニア／非エンジニア）を伝えます。不明点は `AskUserQuestion` で確認されます。出力言語（英語／日本語）もここで選択します。
+
+2. **アイコン検索。** 同梱のアイコンリファレンス（Compute、Storage、Networking、App Integration、Analytics、Security、Common）を読み、正確な Draw.io シェイプ名とカテゴリカラーを取得します。アイコンを推測することは絶対にありません。
+
+3. **レイアウト計画。** ネスト構造（AWS Cloud → Region → VPC → Subnet）、主フローの方向、補助サービスの配置を、同梱のレイアウトガイドラインに沿って決めます。
+
+4. **XML 生成。** ベーステンプレートから、ドキュメント化されたパターン（サービスアイコン、専用シェイプ、グループコンテナ、エッジ）を組み合わせて図を構築します。カテゴリカラーの規律（Compute は常にオレンジ、Storage は常に緑 など）は厳格に守られます。
+
+5. **出力。** `docs/<slug>.drawio` と companion ガイド `docs/<slug>.md` が作成されます。ガイドには各コンポーネント、データフロー、設計判断が、選択した言語で書かれます。
+
+</Steps>
+
+## 使用例
+
+Claude Code にこう頼みます。
+
+> EventBridge がイベントを受け取り Kinesis にルーティング、Lambda プロセッサが S3（アーカイブ用）と DynamoDB（ホット読み取り用）に書き込むリアルタイムデータパイプラインの図を作って。対象はエンジニアリングチーム。
+
+`docs/` に 2 ファイルが出力されます。
+
+- `realtime-data-pipeline.drawio` — Draw.io で開いて確認・編集できます
+- `realtime-data-pipeline.md` — companion ガイド
+
+図には正しいアイコン（Lambda はオレンジ、S3 は緑、DynamoDB は紫）が使われ、全体が AWS Cloud グループでラップされ、各エッジにはプロトコルやフローステップのラベルが付きます。
+
+<Aside title="スクリーンショット">
+ターミナルからの呼び出しと生成された Draw.io 図のスクリーンショットはここに追加予定です。[`src/assets/skills/aws-architecture-diagram/`](https://github.com/oharu121/oharu-skill-hub) を参照。
+</Aside>
+
+## オーディエンスモード
+
+呼び出しごとに 2 つのモードを選べます。
+
+| モード | ラベル | レイアウト | 向いている場面 |
+|---|---|---|---|
+| **技術者向け** | プロトコル名、サービス種別、API 名 | ネストされたグループ、高密度 | エンジニアリングレビュー、RFC |
+| **非技術者向け** | 丸囲みステップ番号、平易な説明 | フローサマリー付きスイムレーン | ステークホルダー向けスライド、オンボーディング |
+
+非技術者向けモードでは、技術修飾子も省略されます（「OpenSearch Serverless」ではなく「OpenSearch」、「k-NN ベクトルインデックス」ではなく「検索データベース」）。ドメイン知識がなくても読める図になります。
+
+アイコンパレット、レイアウトルール、VPC パターン、色規律の完全版は [リファレンス](/ja/skills/aws-architecture-diagram/reference/) を参照してください。
+
+## 関連スキル
+
+<CardGrid>
+  <LinkCard title="aws-cost-estimate" href="/ja/skills/aws-cost-estimate/" description="図ができたら次は見積もり。同じアーキテクチャ情報をそのまま使えます。" />
+  <LinkCard title="bedrock-ops" href="/ja/skills/bedrock-ops/" description="Bedrock KB + S3 パイプラインなら、設計した構成をそのまま運用へ。" />
+</CardGrid>
+
+## ソース
+
+[`SKILL.md` を GitHub で見る](https://github.com/oharu121/skills/blob/main/skills/aws-architecture-diagram) — エージェント向けの指示、アイコンリファレンス、Draw.io テンプレートが含まれます。

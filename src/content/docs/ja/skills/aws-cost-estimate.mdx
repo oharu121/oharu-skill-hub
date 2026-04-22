@@ -1,0 +1,77 @@
+---
+title: aws-cost-estimate
+description: アーキテクチャ資料から AWS Price List API を使って月次コスト見積もりを作成する Claude Code スキル。Pricing Calculator 共有リンクの生成にも対応。
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import InstallCommand from '../../../../components/InstallCommand.astro';
+
+アーキテクチャ資料から正確な月次 AWS コスト見積もりを生成します。価格は記憶データではなく AWS Price List API から取得し、すべての行に計算式と出典 URL を記載します。
+
+<InstallCommand slug="aws-cost-estimate" />
+
+## 何をするか
+
+Markdown の設計ドキュメント、RFC、インラインのひと段落 — どんなアーキテクチャ資料でも渡すと、構造化されたコストレポートを出力します。資料からサービスとスケール前提を抽出し、AWS CLI が使える環境では Price List API で、使えない環境では Web 検索で最新価格を確認します。出力は前提条件、サービスごとの内訳（単価 × 使用量の計算）、月次合計の範囲、注意事項という構成の生レポートです。
+
+このスキルは「誠実さ」にこだわります。すべての行に計算式を表示し、価格ページの URL を引用し、米国価格を地域代理値として使う場合は明記し、コストを支配するサービスを明示します。既存インフラを使う設計では該当サービスを $0 と注記付きで出します。結果として「人に見せて説明できる」数字になります。
+
+出力言語と通貨は引数で指定できます。日本語 + JPY、英語 + USD、自由に組み合わせ可能。JPY を選ぶと為替レートは推測せず、ユーザーに確認します。
+
+## 使いどころ
+
+- RFC や提案書を書いていて、説明可能な月次コスト見積もりが欲しいとき
+- AWS Pricing Calculator を開かずに「OpenSearch を足したらいくら？」を素早く試したいとき
+- バイリンガルのステークホルダー向けに、同じ見積もりを英語と日本語で欲しいとき
+- Markdown レポートだけでなく、Pricing Calculator の共有リンクも最終成果物に含めたいとき
+
+<Aside type="caution" title="向いていないケース">
+このスキルは *定常状態の月次コスト* を見積もります。バーストトラフィック、リザーブドインスタンス、Savings Plans、エンタープライズ契約割引は対象外です。そういった補正はレポートをエクスポートしてから、アカウント固有の情報を上乗せしてください。
+</Aside>
+
+## 動作の流れ
+
+<Steps>
+
+1. **アーキテクチャの解析。** 資料から AWS サービス、設定、スケール前提（ユーザー数、クエリ/日、データ量）を抽出します。見積もりに大きく影響する曖昧な点だけ `AskUserQuestion` で確認します。
+
+2. **価格確認（CLI 優先）。** AWS CLI が使えて認証済みなら Price List API で正確な地域価格を取得します。使えない場合は年を明示した Web 検索にフォールバックし、必要に応じて公式価格ページを WebFetch します。
+
+3. **行計算。** 各サービスについて、月額、単価 × 使用量の計算、出典価格ページ URL を出力します。よくある落とし穴（OpenSearch の OCU 最小値、Gateway vs Interface VPC エンドポイント、Bedrock の埋め込み vs 生成の料金差、Transit Gateway の per-attachment 時間課金）は明示的にフラグします。
+
+4. **レポート出力。** 前提条件、月次コスト内訳、合計範囲、スケーリングオプション、初期コスト、注意事項という構成の Markdown レポート。挨拶や締めの言葉はなし、純粋なレポートです。
+
+5. **（任意）Calculator リンク。** 「AWS Pricing Calculator の共有リンクを作りますか？」と確認。Yes なら Playwright で Calculator の UI にサービス・設定・リージョンを入力し、共有 URL を出力します。
+
+</Steps>
+
+## 使用例
+
+[aws-architecture-diagram](/ja/skills/aws-architecture-diagram/) でリアルタイムパイプラインを設計しました（EventBridge → Kinesis → Lambda → S3 + DynamoDB）。そのまま設計ドキュメントに対して：
+
+```
+/aws-cost-estimate docs/realtime-data-pipeline.md --lang ja --currency jpy
+```
+
+レポートには各サービスとその設定（Kinesis シャード数、Lambda メモリ × 実行数、DynamoDB RCU/WCU）、計算式、価格ページ引用、月次合計範囲、Kinesis が支配的というフラグが記載されます。注意事項には「Tokyo リージョンは us-east-1 より 15〜20% 高い」「Kinesis 見積もりはピークではなくベースラインスループット前提」なども明記されます。
+
+## 引数
+
+| 引数 | 値 | デフォルト |
+|---|---|---|
+| `doc-path` | アーキテクチャ資料のパス、またはインライン記述 | — |
+| `--lang` | `en`、`ja` | `ja` |
+| `--currency` | `usd`、`jpy` | `usd` |
+
+`--currency jpy` の場合、為替レートは推測せずユーザーに確認します。
+
+## 関連スキル
+
+<CardGrid>
+  <LinkCard title="aws-architecture-diagram" href="/ja/skills/aws-architecture-diagram/" description="先に設計し、次に見積もる。同じ入力を両方のスキルで使えます。" />
+  <LinkCard title="bedrock-ops" href="/ja/skills/bedrock-ops/" description="Bedrock 中心の設計なら、実際にデプロイされた KB で前提を検証できます。" />
+</CardGrid>
+
+## ソース
+
+[`SKILL.md` を GitHub で見る](https://github.com/oharu121/skills/blob/main/skills/aws-cost-estimate) — エージェント向けの指示、Price List API リファレンス、Calculator 自動化ガイド。
