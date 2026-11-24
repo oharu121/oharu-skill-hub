@@ -31,7 +31,12 @@ Port the fixes oharu-tech-blog shipped, keeping each one in the step that owns i
   - `.yml` and `.yaml` count as code;
   - created files are the untracked paths that are new since Step 0b;
   - an off-list edit that staged code depends on stops the flow and asks.
-- **Step 12**: a file `/simplify` created counts as put there.
+- **Steps 0b and 0c** run `git status --porcelain -uall`. The review caught that plain
+  `--porcelain` collapses an untracked directory to one `?? dir/` line, so a file created
+  inside a directory that was already untracked would go unseen.
+- **Step 12**: a file `/simplify` created counts as put there, and the `git add` template
+  names "the files Step 0c added".
+- The stop is an `AskUserQuestion`, so it does not end the turn.
 - **Error table**: the off-list-edit row branches on whether staged code depends on it.
 
 ## Files Modified
