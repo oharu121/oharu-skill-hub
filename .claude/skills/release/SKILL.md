@@ -169,8 +169,11 @@ Read the file named by the **Validation** row. State what will run (`locale-pari
 Then look at what is pending:
 
 ```bash
-git status --porcelain
+git status --porcelain -uall
 ```
+
+`-uall` lists every untracked file rather than collapsing a new directory to one line,
+which Step 0c needs to tell its own new files apart.
 
 **Name every path it prints.** The main checkout often holds another session's work in
 progress, such as a half-written skill page. Ask with AskUserQuestion which paths belong to
@@ -180,7 +183,7 @@ the owner did not name.
 ### 0c: Simplify the Code
 
 **When no path on the staging list is code, skip this step and say so.** Code means a
-source file: `.ts`, `.js`, `.mjs`, `.astro`, `.css` or `.json`. Guide pages (`.md`,
+source file: `.ts`, `.js`, `.mjs`, `.astro`, `.css`, `.json`, `.yml` or `.yaml`. Guide pages (`.md`,
 `.mdx`) and images under `src/assets/` are not code, so a release of those alone has
 nothing for `/simplify`.
 
@@ -193,9 +196,15 @@ report: ending the turn ends the release flow. Its edits stay uncommitted. Step 
 validates them and Step 12 stages them with the rest of the staging list.
 
 **A file `/simplify` creates joins the staging list**, such as a helper it extracted,
-because a staged file now imports it. Run `git status --porcelain` after it returns and
-add each new untracked path it made. A change to an existing file off the list is a
-different case; see the error table.
+because a staged file now imports it. Run `git status --porcelain -uall` after it returns and
+compare it with the output Step 0b printed: each untracked path that is new since then is
+one it made. An untracked path already in Step 0b's output belongs to someone else. Step 9
+would not catch the omission: it builds the working tree, where the file exists.
+
+**When it edits an existing file off the list, stop and ask with AskUserQuestion** if staged code now depends
+on that edit, such as a helper moved into a shared module. Leaving the edit out breaks
+`main` after the merge, and staging it ships a file the owner did not name. An edit
+nothing staged depends on is reported and left out; see the error table.
 
 This runs before the plan file exists so that Step 5 describes the code that will merge.
 
@@ -392,12 +401,13 @@ Read the **Commit message** row. On `auto`, state the message and the paths, the
 on `ask`, confirm first.
 
 ```bash
-git add <the paths named in Step 0b, plus CHANGELOG.md, README.md and the plan file>
+git add <the paths named in Step 0b, the files Step 0c added, CHANGELOG.md, README.md and the plan file>
 git commit -m "<commit message from Step 7>"
 ```
 
 **Stage by name, never `git add -A` or `git add .`.** Anything in `git status` you did not
-put there and the owner did not name is reported, not committed.
+put there and the owner did not name is reported, not committed. A file `/simplify`
+created in Step 0c counts as put there.
 
 ### Step 12.5: Code Review
 
@@ -771,6 +781,6 @@ AskUserQuestion, naming the branch, how many commits `main` is behind, and every
 | `git worktree remove` says `cannot remove a locked working tree` | Another session holds it. Keep it, report the pid. Never pass `-f` |
 | Issue, PR or release body empty | `body-check` exited non-zero. Stop |
 | `/simplify` created a new file | It joins the staging list (Step 0c), because staged code imports it |
-| `/simplify` edited an existing file off the staging list | Report the path and the edit. Step 12 does not stage it; never revert a file that held someone else's work |
+| `/simplify` edited an existing file off the staging list | If staged code depends on the edit, stop and ask with AskUserQuestion (Step 0c). Otherwise report the path and the edit; Step 12 does not stage it, and never revert a file that held someone else's work |
 | `git merge-base --is-ancestor` exits non-zero at Step 14 | The tag is isolated. Delete it, re-run Step 13.6's sync, and re-tag on the commit `tag-guard` confirms |
 | Worktree isolation refuses a command as "too complex to verify" | Split it into plain standalone commands, per Command Shape. Never route around it with `git -C` or a script |
