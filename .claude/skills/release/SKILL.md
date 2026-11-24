@@ -2,7 +2,7 @@
 name: release
 description: Release a change to the Oharu Skill Hub. Creates a GitHub issue and plan file, validates locale parity and the build, reviews the diff, opens a PR, waits for the Vercel preview, squash merges, tags, and publishes a GitHub release.
 user-invocable: true
-allowed-tools: Bash(git describe *), Bash(git rev-parse --git-dir --git-common-dir), Bash(git branch -m *), Bash(git checkout --detach origin/main), Bash(git worktree remove .claude/worktrees/*), Bash(git worktree list --porcelain), Bash(git status --porcelain), Bash(git status --porcelain *), Bash(git status --short), Bash(git log *), Bash(git diff *), Bash(git rev-list *), Bash(git merge-base *), Bash(git branch --show-current), Bash(git fetch), Bash(git fetch *), Bash(git pull), Bash(git pull *), Bash(git checkout -b *), Bash(git checkout main), Bash(git add *), Bash(git commit -m *), Bash(git push -u origin *), Bash(git push origin v*), Bash(git tag v*), Bash(curl -sS -o /dev/null *), Bash(sleep *), Bash(gh issue *), Bash(gh pr *), Bash(gh release *), Bash(gh repo view *), Bash(gh api repos/*/milestones*), Bash(gh api repos/*/deployments*), Bash(gh api repos/*/commits/*), Bash(pnpm build), Bash(pnpm preview), Bash(pnpm version *), Bash(mktemp -d), Bash(node .claude/skills/release/scripts/release-guard.ts *), Read, Write, Edit, Glob, Grep, AskUserQuestion, Task, TodoWrite
+allowed-tools: Bash(git describe *), Bash(git rev-parse --git-dir --git-common-dir), Bash(git branch -m *), Bash(git checkout --detach origin/main), Bash(git worktree remove .claude/worktrees/*), Bash(git worktree list --porcelain), Bash(git status --porcelain), Bash(git status --porcelain *), Bash(git status --short), Bash(git log *), Bash(git diff *), Bash(git rev-list *), Bash(git merge-base *), Bash(git branch --show-current), Bash(git fetch), Bash(git fetch *), Bash(git pull), Bash(git pull *), Bash(git checkout -b *), Bash(git checkout main), Bash(git add *), Bash(git commit -m *), Bash(git push -u origin *), Bash(git push origin v*), Bash(git tag v*), Bash(curl -sS -o /dev/null *), Bash(sleep *), Bash(gh issue *), Bash(gh pr *), Bash(gh release *), Bash(gh repo view *), Bash(gh api repos/*/milestones*), Bash(gh api repos/*/deployments*), Bash(gh api repos/*/commits/*), Bash(pnpm build), Bash(pnpm preview), Bash(pnpm version *), Bash(mktemp -d), Bash(node .claude/skills/release/scripts/release-guard.ts *), Skill(simplify), Skill(simplify *), Read, Write, Edit, Glob, Grep, AskUserQuestion, Task, TodoWrite
 ---
 
 # Release Skill
@@ -10,9 +10,10 @@ allowed-tools: Bash(git describe *), Bash(git rev-parse --git-dir --git-common-d
 Orchestrate a full release of this site: GitHub issue, validation, feature branch, code
 review, PR, Vercel preview, squash merge, tag, GitHub release.
 
-**Every interaction with the user goes through `AskUserQuestion`, never plain text.** The
-`allowed-tools` grant in this file's frontmatter is turn-scoped, and a plain-text question
-answered as a new user message ends the turn and brings every permission prompt back.
+**Every interaction with the user goes through `AskUserQuestion`, never plain text.** That
+keeps the whole release inside one turn: a plain-text question answered as a new user
+message ends the turn, and the flow has to be picked up again from whatever the next
+message says.
 
 **`npm` and `npx` are blocked on this machine.** Use `pnpm` / `pnpm dlx`.
 
@@ -27,24 +28,26 @@ command leaves it unset, and `gh` is handed `/issue-body.md`.
   prints. **Never write scratch files inside the repo**: they get swept into `git add`.
 
 Run every command from the repo root. The guard script is called by its repo-relative
-path, and the allow rule matches that path literally.
+path.
 
 ## Command Shape
 
-The `allowed-tools` line pre-approves the exact command shapes this skill uses. A rule is
-a literal glob over the command string, matched against each subcommand separately; the
-separators are `&&`, `||`, `;`, `|`, `|&`, `&`, and newlines.
+A release may run from a worktree, and worktree isolation refuses any command it cannot
+prove is not git escaping the worktree. It judges the command text, so a value computed
+at runtime is refused in any command, git or not:
 
-- **Never assign a shell variable.** `BRANCH=$(git branch --show-current)` matches no
-  rule. Inline the literal value you already hold.
-- **One command per Bash call.** No `if`, no `$( )`. Guards that need a real non-zero exit
-  live in `SKILLS_DIR/scripts/release-guard.ts`.
-- **Keep every `|` inside quotes.** A quoted pipe in a `--jq` filter is fine; an unquoted
-  one splits the command.
-- **Write one `Bash(...)` per rule.** `Bash(a *, b *)` is one rule whose pattern is the
-  literal string `a *, b *`, and it matches nothing.
+- **One plain command per Bash call.** No `$( )`, no `if`, no git inside a pipe chain or an
+  inline script, and never `git -C <path>`. Guards that need a real non-zero exit live in
+  `SKILLS_DIR/scripts/release-guard.ts`.
+- **Never use a shell variable or substitution.** Inline the literal value you already
+  hold: the branch name, the tag, the issue number.
+- **Write multi-line content with the Write tool**, then `cat` the pieces together. A
+  heredoc or a `node -e` string that mentions git is refused even when it runs no git.
 
-Adding a command to this skill means adding its shape to `allowed-tools`.
+The `allowed-tools` frontmatter is best-effort and not kept in step with every command: in
+auto mode it does nothing. When you do edit it, write one `Bash(...)` per rule
+(`Bash(a *, b *)` is a single rule that matches nothing), and remember that a trailing `*`
+also matches flags appended after it.
 
 ## Fixed Settings
 
@@ -173,6 +176,22 @@ git status --porcelain
 progress, such as a half-written skill page. Ask with AskUserQuestion which paths belong to
 this release before Step 1; the answer is the staging list for Step 12. Never stage a path
 the owner did not name.
+
+### 0c: Simplify the Code
+
+**When no path on the staging list is code, skip this step and say so.** A path is not
+code when it ends in `.md` or `.mdx`. `/simplify` reviews code, so a release of guide pages
+alone has nothing for it.
+
+**Otherwise**, invoke the `simplify` skill with the Skill tool. Pass as its args the code
+paths on the staging list, space-separated, so it reviews and edits those and nothing
+else. Never pass a path the owner left off the list.
+
+Apply what it finds, then **carry on with Phase 1 in the same turn**. Do not stop to
+report: ending the turn ends the release flow. Its edits stay uncommitted. Step 9
+validates them and Step 12 stages them with the rest of the staging list.
+
+This runs before the plan file exists so that Step 5 describes the code that will merge.
 
 ---
 
@@ -744,4 +763,5 @@ AskUserQuestion, naming the branch, how many commits `main` is behind, and every
 | `branch-cleanup` reports DELETE FAILED | It printed the command to run by hand. A remote failure is tolerated |
 | `git worktree remove` says `cannot remove a locked working tree` | Another session holds it. Keep it, report the pid. Never pass `-f` |
 | Issue, PR or release body empty | `body-check` exited non-zero. Stop |
-| A Bash call raises a permission prompt | Note the exact command. Its shape is missing from `allowed-tools`; finish the release, then fix the frontmatter |
+| `/simplify` edited a path off the staging list | Report the path and the edit. Step 12 does not stage it; never revert a file that held someone else's work |
+| Worktree isolation refuses a command as "too complex to verify" | Split it into plain standalone commands, per Command Shape. Never route around it with `git -C` or a script |
