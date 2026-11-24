@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The `release` skill's `/simplify` step also reviews YAML config, tells files it created apart from another session's untracked files, and stops to ask when shipped code would depend on an edit outside the release.
+
 - The `release` skill now runs the `/simplify` code-cleanup review on the code it ships, and skips it for releases of guide pages and images only. Its command rules are explained by worktree isolation rather than by avoiding permission prompts, which auto mode makes rare.
 
 ## [v0.2.0] — 2026-11-24
