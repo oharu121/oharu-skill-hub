@@ -193,7 +193,7 @@ function branchCleanup(branch: string): boolean {
     console.log(`local  ${branch}: deleted`);
   }
 
-  if (probe("git", ["ls-remote", "--exit-code", "--heads", "origin", branch]) === null) {
+  if (probe("git", ["ls-remote", "--exit-code", "--heads", "origin", `refs/heads/${branch}`]) === null) {
     console.log(`remote ${branch}: already gone`);
     return true;
   }
