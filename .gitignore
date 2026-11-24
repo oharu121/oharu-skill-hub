@@ -31,5 +31,9 @@ Thumbs.db
 .vercel
 .netlify
 
-# local Claude Code state (skills installed via gh skill, local settings)
-.claude/
+# local Claude Code state (skills installed via gh skill, local settings),
+# except this repo's own release skill
+.claude/*
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/release/

@@ -1,0 +1,111 @@
+---
+title: logo
+description: A Claude Code skill that designs a mark through reference study, generated concept rounds, and a browsable contact sheet — every candidate rendered at 16px, the size that actually decides a logo.
+---
+
+import { Aside, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
+import InstallCommand from '../../../../components/InstallCommand.astro';
+import round1 from '../../../../assets/skills/logo/round-1-icons.png';
+import round2 from '../../../../assets/skills/logo/round-2-concepts.png';
+import hanko from '../../../../assets/skills/logo/round-3-hanko-16px.png';
+import brokenU from '../../../../assets/skills/logo/broken-u.png';
+
+Design a mark without settling for the generated default. This skill makes you look at real work before generating anything, renders every candidate at the size a favicon actually uses, and stops at a gate after each round so the picking stays yours.
+
+<InstallCommand slug="logo" />
+
+## What it does
+
+Ask any agent for twenty-four logo concepts and you get twenty-four of the same logo. Here is what that looks like — eight "different" icon concepts from one such round:
+
+<Image src={round1} alt="Eight icon concepts in a grid, every one a thin blue outline drawing of a circle or ring at the same stroke weight with the same rounded ends" />
+
+Aperture, orbit, terminal, arcs, torii, squircle, prompt, split — eight names for one drawing. Every one is a monoline geometric stroke at uniform weight with rounded caps. That skeleton is the default a language model reaches for, and it is the house style of every automated logo tool. Asking for range does not produce range.
+
+The fix is not a better prompt. The skill forces a **reference study first**: screenshot five to eight real identities, then tabulate what each one does next to what you were about to do instead. Each contradiction becomes a distinct territory for the next round. The same brief, run again after that step:
+
+<Image src={round2} alt="Sixteen concepts grouped as editorial serif, grotesk, vermilion seal, type with colour, and monogram — visibly five different ideas rather than one" />
+
+## When to use it
+
+- You want a logo, favicon, or wordmark and do not want the templated look
+- You have generated concepts before and everything came back samey
+- The mark has to work as a favicon, so 16px legibility is a hard requirement
+- The wordmark should ship as geometry rather than depend on a webfont
+
+<Aside type="caution" title="When not to use it">
+This is a workflow, not an image generator. It produces hand-authored SVG geometry and baked typeface outlines — clean, editable, tiny. For illustrative or painterly marks, use a raster tool and vectorise separately.
+</Aside>
+
+## How it works
+
+<Steps>
+
+1. **Brief.** Four questions that constrain the design more than taste does: where it appears, the smallest real size, whether the wordmark string is fixed, and whether anything personal or cultural is in play.
+
+2. **Reference study.** Screenshot real identities and record contradictions, not compliments. Each row becomes a territory.
+
+3. **Wide round.** One group per territory, written to a scratch directory as SVGs plus a `concepts.json` that drives grouping and captions.
+
+4. **Contact sheet.** `gallery.mjs` builds a page showing every concept large, at 32px, and at 16px, with a light/dark toggle and click-to-flag. It serves over HTTP so the agent can screenshot what it just built — and it must look before showing you.
+
+5. **Gate.** You pick. The skill presents a ranking, says what it would cut and why, and waits.
+
+6. **Refine.** A new round within the winner — weights, proportions, colour pairings — then another gate.
+
+7. **Ship.** Bake outlines, compose the assets, wire in the accessible name, verify at 320px in both themes, and commit the generator alongside its output.
+
+</Steps>
+
+## The 16px column
+
+Every sheet renders each candidate at 16px because that column decides things. Here it is settling a real question — which form a two-character seal should take:
+
+<Image src={hanko} alt="Six vermilion seal options, each shown large and again at 32 and 16 pixels. At 16 pixels the two-character versions are indistinct blocks while the single-character round seal still reads" />
+
+The traditional two-character form is correct for the name and the worst performer in a browser tab; the outlined version disappears entirely. That is arithmetic, not taste, and it is invisible until you render it.
+
+Three things the 16px column reliably decides:
+
+| Principle | Why |
+|---|---|
+| Solid fills survive, strokes close up | A stroked ring fills in at favicon size |
+| Detail is a liability | A 10-stroke CJK glyph at 16px is texture, not a character |
+| Silhouette beats interior | A circle among square favicons is identifiable when nothing inside resolves |
+
+## Render it and look
+
+The skill requires the agent to open the sheet and read its own screenshot before presenting. This is not ceremony. Bugs that survived review-by-reading, and were obvious the moment anyone looked:
+
+<Image src={brokenU} alt="The word oharu twice: above, the final u has a right stroke that stops at half height; below, the same word with the stroke rising to full x-height like its neighbours" />
+
+That letter's right stem is missing its top half. The path data reads as plausible; the render does not.
+
+## Example
+
+```
+/logo new a mark for a personal tech blog, needs a favicon
+```
+
+The skill asks the four brief questions, studies six real identities and reports the contradiction table, generates a wide round across five territories, builds the sheet at `http://localhost:4599/`, screenshots it, fixes anything broken, and presents a ranking with explicit cuts. You pick a direction; it refines within it and gates again. On `ship`, it bakes the outlines and emits the favicon and lockup.
+
+## Bundled scripts
+
+| Script | Does |
+|---|---|
+| `scripts/gallery.mjs` | Contact sheet plus a local server. Node only, no dependencies |
+| `scripts/outline.py` | Bakes typeface outlines to SVG paths via fontTools + HarfBuzz. Pulls its deps through `uv` on demand |
+
+`outline.py` returns a real bounding box from `BoundsPen` rather than leaving callers to parse path text — `SVGPathPen` emits `H`/`V` shorthand carrying a single coordinate, so any code assuming numbers alternate x,y returns silently wrong bounds. See the [Reference](/skills/logo/reference/) for the job shape and the rest of the traps.
+
+## Related skills
+
+<CardGrid>
+  <LinkCard title="thumbnail-generator" href="/gems/thumbnail-generator/" description="Article cover art, once the identity exists." />
+  <LinkCard title="release" href="/skills/release/" description="Ship the finished assets with an issue, tag, and release notes." />
+</CardGrid>
+
+## Source
+
+[View `SKILL.md` on GitHub](https://github.com/oharu121/skills/blob/main/skills/logo) — the seven non-negotiables, the round structure, and the ship checklist. See the [Reference](/skills/logo/reference/) for the contact-sheet API and the outline-baking traps.

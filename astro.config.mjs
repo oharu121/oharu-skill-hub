@@ -66,6 +66,13 @@ export default defineConfig({
 										{ slug: 'skills/release/reference', label: 'Reference', translations: { ja: 'リファレンス' } },
 									],
 								},
+								{
+									label: 'logo',
+									items: [
+										{ slug: 'skills/logo', label: 'Guide', translations: { ja: 'ガイド' } },
+										{ slug: 'skills/logo/reference', label: 'Reference', translations: { ja: 'リファレンス' } },
+									],
+								},
 								{ slug: 'skills/migrate-env-to-1password' },
 								{ slug: 'skills/generate-bruno-files' },
 								{ slug: 'skills/devio' },

@@ -1,0 +1,114 @@
+---
+title: logo — Reference
+description: Contact-sheet API, concepts.json shape, outline-baking job format, and the geometry traps that cost real time.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Full API for the two bundled scripts, plus the non-negotiables in condensed form.
+
+## Subcommands
+
+| Command | Does |
+|---|---|
+| `/logo new <brief>` | Brief → reference study → wide round → gate → refine → gate |
+| `/logo round <dir>` | Rebuild and serve the contact sheet for a directory |
+| `/logo refine <concept-id>` | Re-enter at the refinement round with that concept as the seed |
+| `/logo ship <dir>` | Bake outlines, compose assets, wire in, verify |
+
+## The seven non-negotiables
+
+Ordered by how much damage skipping them does.
+
+1. **Study real work before generating.** Cold generation gives *N* samples from one distribution
+2. **Render it and look before showing anyone.** You cannot judge a mark from path data
+3. **Judge at 16px.** Solid fills survive; strokes close up; detail is a liability
+4. **Never bake in an assumption about the person.** Ask what a name means before building on it
+5. **Real typeface outlines, not hand-rolled letterforms**
+6. **Decide colour by comparison, not theory.** Adjacent hues can fight when each is fine alone
+7. **The user picks, at every gate.** Recommend with reasons; do not decide
+
+## `gallery.mjs`
+
+```bash
+node SKILLS_DIR/scripts/gallery.mjs <dir> [--port 4599] [--title "Round 2"] [--no-serve]
+```
+
+Reads every `*.svg` in `<dir>`, writes `index.html` beside them, and serves it.
+
+| Flag | Default | Does |
+|---|---|---|
+| `--port` | `4599` | Port for the local server |
+| `--title` | directory name | Page heading |
+| `--no-serve` | off | Write the sheet and exit, no server |
+
+Exit codes: `1` if the directory is missing or holds no SVGs, `0` otherwise.
+
+<Aside type="note" title="Why it serves instead of writing a file:// page">
+Headless browsers block the `file://` scheme, so a static server is the only way an agent can screenshot the sheet it just built. Reviewing that sheet is the entire point of the step.
+</Aside>
+
+### `concepts.json`
+
+Optional, sits beside the SVGs. Anything without an entry still renders, keyed on its filename.
+
+```json
+[
+  {
+    "id": "c01",
+    "name": "Aperture",
+    "note": "Ring with a gap; reads as a lens",
+    "group": "Editorial serif",
+    "fixedColour": false
+  }
+]
+```
+
+| Field | Effect |
+|---|---|
+| `id` | Must match the SVG filename without its extension |
+| `name` | Shown after the id. Omit and the caption is just the id |
+| `note` | One line under the caption |
+| `group` | Section heading. Sections appear in the order groups first appear in this file |
+| `fixedColour` | Tags the card. `true` means the palette is baked rather than inheriting `currentColor` |
+
+Concepts should use `fill="currentColor"` unless deliberately fixed-palette, so the sheet's light/dark toggle exercises them.
+
+## `outline.py`
+
+```bash
+echo '[{"id":"word","font":"Fraunces.ttf","text":"oharu",
+        "axes":{"wght":700,"WONK":1,"opsz":144}}]' \
+  | LOGO_FONT_DIR=./.fonts uv run --with fonttools --with uharfbuzz \
+    python SKILLS_DIR/scripts/outline.py
+```
+
+Reads a JSON job list on stdin, writes JSON on stdout.
+
+**Job fields:** `id`, `font` (filename inside `LOGO_FONT_DIR`, or an absolute path), `text`, optional `axes` for variable fonts, optional `tracking` in 1000-unit space.
+
+**Result fields:** `d` (path data, already flipped into SVG's y-down space and normalised to a 1000-unit em), `width`, `bbox`, `ascender`, `descender`, `capHeight`, `xHeight`.
+
+`LOGO_FONT_DIR` defaults to `.fonts`. Fonts are the caller's responsibility — they are large and usually licensed, so fetch them into that directory and keep it out of version control.
+
+## Geometry traps
+
+Each of these cost real time before being written down.
+
+**Do not compute a bounding box by parsing path text.** `SVGPathPen` emits `H`/`V` shorthand carrying a *single* coordinate, so any code assuming numbers alternate x,y silently returns wrong bounds for every glyph after the first horizontal or vertical segment. It does not crash; it produces plausible output. `outline.py` returns `bbox` from `BoundsPen` for exactly this reason — use it.
+
+**A mark shorter than its wordmark cannot be clipped to a square.** If the narrow-screen variant is the mark alone, and the mark is shorter than the wordmark's ink height, clipping the full lockup to a square will not produce it. Emit two SVGs and let CSS choose.
+
+**Round coordinates to integers** at a 1000-unit em. At any real render size the error is far below a pixel, and the path data shrinks by roughly a third.
+
+**An external `favicon.svg` cannot inherit `currentColor`.** It has no inheriting context. If it must theme, embed a `prefers-color-scheme` block inside the file.
+
+## Accessibility
+
+The mark is artwork, so the accessible name comes from the markup around it: an `aria-label` on the wrapping link, sourced from existing i18n strings rather than duplicated into the SVG, with the SVGs themselves `aria-hidden`. Replacing a text brand also means deleting the CSS it needed — `text-overflow`, `white-space`, font sizing — which no longer applies and will mislead the next reader.
+
+## Reproducibility
+
+Baked path data is unreadable and unmaintainable by hand. Record in the component header that the outlines are generated, the exact command that regenerates them, the source faces and axis settings, and that the wordmark string is frozen.
+
+**Commit the generator, not just its output.** A generator living in a scratch directory is a generator that does not exist.

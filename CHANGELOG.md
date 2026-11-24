@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.0] — 2026-11-24
+
+### Added
+
+- Guide and reference pages for the `logo` skill, in English and Japanese, with screenshots of its concept rounds and 16px contact sheet.
+- `logo` card on the Skills landing page and a `logo` group in the sidebar.
+- The `release` skill that ships this site is now versioned in the repo under `.claude/skills/release/`.
+
+### Changed
+
+- pnpm build approvals for `esbuild` and `sharp` moved to `pnpm-workspace.yaml`; the ignored `pnpm.onlyBuiltDependencies` field in `package.json` was removed.
+
 ## [v0.1.0] — 2026-04-22
 
 ### Added
@@ -19,4 +31,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Starlight i18n with `defaultLocale: 'root'` — English at `/`, Japanese at `/ja/`.
 - Pagefind static search, Starlight sidebar with curated AWS + Workflows sub-groups, automatic TOC per page.
 
+[v0.2.0]: https://github.com/oharu121/oharu-skill-hub/releases/tag/v0.2.0
 [v0.1.0]: https://github.com/oharu121/oharu-skill-hub/releases/tag/v0.1.0

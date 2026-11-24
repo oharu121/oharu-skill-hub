@@ -156,6 +156,30 @@ export const skills: SkillEntry[] = [
 		},
 	},
 	{
+		slug: 'logo',
+		category: 'workflow',
+		status: 'stable',
+		install: {
+			gh: gh('logo'),
+			npx: npx('logo'),
+			pnpm: pnpm('logo'),
+		},
+		related: ['thumbnail-generator', 'release'],
+		github: src('skills/logo'),
+		i18n: {
+			en: {
+				title: 'logo',
+				tagline:
+					'Design a mark through reference study, concept rounds, and a contact sheet that renders every candidate at 16px.',
+			},
+			ja: {
+				title: 'logo',
+				tagline:
+					'リファレンス調査・コンセプトのラウンド生成・全候補を 16px でも描画するコンタクトシートでロゴを設計します。',
+			},
+		},
+	},
+	{
 		slug: 'devio',
 		category: 'workflow',
 		status: 'stable',

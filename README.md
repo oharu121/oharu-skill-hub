@@ -9,7 +9,7 @@ Built with [Astro](https://astro.build/) + [Starlight](https://starlight.astro.b
 
 ## What's documented
 
-7 Claude Code skills and 3 Gemini gems — original prose, copy-paste install commands, narrative walkthroughs.
+8 Claude Code skills and 3 Gemini gems — original prose, copy-paste install commands, narrative walkthroughs.
 
 - [Skills](https://oharu-skill-hub.vercel.app/skills/)
 - [Gems](https://oharu-skill-hub.vercel.app/gems/)
