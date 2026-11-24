@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- The `release` skill now runs the `/simplify` code-cleanup review on the code it ships, and skips it for releases of guide pages and images only. Its command rules are explained by worktree isolation rather than by avoiding permission prompts, which auto mode makes rare.
+
 ## [v0.2.0] — 2026-11-24
 
 ### Added

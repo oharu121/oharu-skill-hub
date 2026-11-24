@@ -3,10 +3,9 @@
  * The release steps whose exit code has to mean something.
  *
  * Each subcommand replaces an inline `VAR=$(...)` + `if [ ... ]; then exit 1;
- * fi` snippet. No Claude Code permission rule can match a variable assignment,
- * so those snippets prompt on every release; printing a value and letting the
- * model compare it turns a hard stop into a suggestion. These are the checks
- * that must not be skippable.
+ * fi` snippet. Worktree isolation refuses a command that computes a value at
+ * runtime, and printing a value for the model to compare turns a hard stop
+ * into a suggestion. These are the checks that must not be skippable.
  *
  * Node builtins only, run with Node's native type stripping. Nothing here may
  * depend on `pnpm install` having happened.
