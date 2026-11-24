@@ -179,9 +179,10 @@ the owner did not name.
 
 ### 0c: Simplify the Code
 
-**When no path on the staging list is code, skip this step and say so.** A path is not
-code when it ends in `.md` or `.mdx`. `/simplify` reviews code, so a release of guide pages
-alone has nothing for it.
+**When no path on the staging list is code, skip this step and say so.** Code means a
+source file: `.ts`, `.js`, `.mjs`, `.astro`, `.css` or `.json`. Guide pages (`.md`,
+`.mdx`) and images under `src/assets/` are not code, so a release of those alone has
+nothing for `/simplify`.
 
 **Otherwise**, invoke the `simplify` skill with the Skill tool. Pass as its args the code
 paths on the staging list, space-separated, so it reviews and edits those and nothing
@@ -190,6 +191,11 @@ else. Never pass a path the owner left off the list.
 Apply what it finds, then **carry on with Phase 1 in the same turn**. Do not stop to
 report: ending the turn ends the release flow. Its edits stay uncommitted. Step 9
 validates them and Step 12 stages them with the rest of the staging list.
+
+**A file `/simplify` creates joins the staging list**, such as a helper it extracted,
+because a staged file now imports it. Run `git status --porcelain` after it returns and
+add each new untracked path it made. A change to an existing file off the list is a
+different case; see the error table.
 
 This runs before the plan file exists so that Step 5 describes the code that will merge.
 
@@ -244,7 +250,7 @@ gh api repos/oharu121/oharu-skill-hub/milestones -X GET -f state=all -f per_page
 ```
 
 `--paginate` and `state=all` are both required, or a milestone past the first page or a
-closed one reads as missing. Keep the path first and unquoted so the allow rule matches.
+closed one reads as missing.
 
 If it exists but is closed, reopen it:
 
@@ -598,10 +604,11 @@ git push origin v<x.y.z>
 Never `git push --tags`. Confirm the tag is on `main`:
 
 ```bash
-git merge-base --is-ancestor v<x.y.z> origin/main && echo "tag is on main" || echo "TAG ISOLATED"
+git merge-base --is-ancestor v<x.y.z> origin/main
 ```
 
-`TAG ISOLATED` means stop; do not create the release.
+It prints nothing either way; read its exit code. `0` means the tag is on `main`. Any
+other exit means the tag is isolated: stop, and do not create the release.
 
 Read `SKILLS_DIR/templates/release-notes.md`. The `## Changes` list is the CHANGELOG
 section from Step 10b, verbatim. Build `--title` from the **Release title** row and follow
@@ -763,5 +770,7 @@ AskUserQuestion, naming the branch, how many commits `main` is behind, and every
 | `branch-cleanup` reports DELETE FAILED | It printed the command to run by hand. A remote failure is tolerated |
 | `git worktree remove` says `cannot remove a locked working tree` | Another session holds it. Keep it, report the pid. Never pass `-f` |
 | Issue, PR or release body empty | `body-check` exited non-zero. Stop |
-| `/simplify` edited a path off the staging list | Report the path and the edit. Step 12 does not stage it; never revert a file that held someone else's work |
+| `/simplify` created a new file | It joins the staging list (Step 0c), because staged code imports it |
+| `/simplify` edited an existing file off the staging list | Report the path and the edit. Step 12 does not stage it; never revert a file that held someone else's work |
+| `git merge-base --is-ancestor` exits non-zero at Step 14 | The tag is isolated. Delete it, re-run Step 13.6's sync, and re-tag on the commit `tag-guard` confirms |
 | Worktree isolation refuses a command as "too complex to verify" | Split it into plain standalone commands, per Command Shape. Never route around it with `git -C` or a script |

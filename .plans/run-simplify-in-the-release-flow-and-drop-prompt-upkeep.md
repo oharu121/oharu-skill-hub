@@ -36,7 +36,11 @@ the `allowed-tools` frontmatter, and call it best-effort and no longer maintaine
 ## Changes
 
 - **Step 0c: Simplify the Code**
-  - Skips when no staged path is code, meaning every path ends in `.md` or `.mdx`.
+  - Skips when no staged path is a source file (`.ts`, `.js`, `.mjs`, `.astro`, `.css`,
+    `.json`), so guide pages and images alone skip it.
+  - Adds any file `/simplify` creates to the staging list. The review caught that an
+    extracted helper would otherwise be left out of the commit while staged code imports
+    it.
   - Otherwise invokes the `simplify` skill with the staged code paths as args, and carries
     on in the same turn.
   - Its edits are validated in Step 9 and staged in Step 12.
@@ -52,6 +56,13 @@ the `allowed-tools` frontmatter, and call it best-effort and no longer maintaine
     substitutions, multi-line content via the Write tool;
   - `allowed-tools` is called best-effort, keeping the two glob cautions for anyone who
     edits it.
+- **Steps 6a and 14**:
+  - Step 6a drops its last allow-rule rationale.
+  - Step 14's tag-on-main check runs as a plain `git merge-base --is-ancestor`, read by
+    exit code, instead of a git command chained onto `echo`. The chain contradicted the
+    new Command Shape.
+- **`scripts/release-guard.ts`**: its header gives worktree isolation and hard exits as
+  its reason, not prompts.
 
 ## Files Modified
 
