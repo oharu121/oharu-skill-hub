@@ -13,14 +13,17 @@ export type SkillEntry = {
 	};
 	related: string[];
 	github: string;
+	// oharu121/skills commit this page was last checked against. See scripts/check-sync.ts.
+	syncedAt: string;
 	i18n: Record<Locale, { title: string; tagline: string }>;
 };
 
-const repo = 'oharu121/skills';
+export const repo = 'oharu121/skills';
+export const blobBase = `https://github.com/${repo}/blob/main/`;
 const gh = (name: string) => `gh skill install ${repo} ${name}`;
 const npx = (name: string) => `npx skills add ${repo}/${name}`;
 const pnpm = (name: string) => `pnpm dlx skills add ${repo}/${name}`;
-const src = (path: string) => `https://github.com/${repo}/blob/main/${path}`;
+const src = (path: string) => `${blobBase}${path}`;
 
 export const skills: SkillEntry[] = [
 	{
@@ -34,6 +37,7 @@ export const skills: SkillEntry[] = [
 		},
 		related: ['aws-cost-estimate', 'bedrock-ops'],
 		github: src('skills/aws-architecture-diagram'),
+		syncedAt: 'e86556458b7d9ae5b6cda23a48d5404e90009056',
 		i18n: {
 			en: {
 				title: 'aws-architecture-diagram',
@@ -56,6 +60,7 @@ export const skills: SkillEntry[] = [
 		},
 		related: ['aws-architecture-diagram', 'bedrock-ops'],
 		github: src('skills/aws-cost-estimate'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'aws-cost-estimate',
@@ -78,6 +83,7 @@ export const skills: SkillEntry[] = [
 		},
 		related: ['aws-architecture-diagram', 'migrate-env-to-1password'],
 		github: src('skills/bedrock-ops'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'bedrock-ops',
@@ -100,6 +106,7 @@ export const skills: SkillEntry[] = [
 		},
 		related: ['devio', 'generate-bruno-files'],
 		github: src('skills/release'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'release',
@@ -122,6 +129,7 @@ export const skills: SkillEntry[] = [
 		},
 		related: ['bedrock-ops', 'release'],
 		github: src('skills/migrate-env-to-1password'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'migrate-env-to-1password',
@@ -144,6 +152,7 @@ export const skills: SkillEntry[] = [
 		},
 		related: ['devio', 'release'],
 		github: src('skills/generate-bruno-files'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'generate-bruno-files',
@@ -166,6 +175,7 @@ export const skills: SkillEntry[] = [
 		},
 		related: ['thumbnail-generator', 'release'],
 		github: src('skills/logo'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'logo',
@@ -190,6 +200,7 @@ export const skills: SkillEntry[] = [
 		},
 		related: ['generate-bruno-files', 'release'],
 		github: src('skills/devio'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'devio',
@@ -207,6 +218,7 @@ export const skills: SkillEntry[] = [
 		status: 'stable',
 		related: ['jp-communication-enhancer', 'thumbnail-generator'],
 		github: src('gems/daily-briefing.md'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'daily-briefing',
@@ -224,6 +236,7 @@ export const skills: SkillEntry[] = [
 		status: 'stable',
 		related: ['daily-briefing', 'thumbnail-generator'],
 		github: src('gems/jp-communication-enhancer.md'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'jp-communication-enhancer',
@@ -241,6 +254,7 @@ export const skills: SkillEntry[] = [
 		status: 'stable',
 		related: ['daily-briefing', 'jp-communication-enhancer'],
 		github: src('gems/thumbnail-generator.md'),
+		syncedAt: '960aa24b9b829526fb980daba8f28726de0d5f9b',
 		i18n: {
 			en: {
 				title: 'thumbnail-generator',

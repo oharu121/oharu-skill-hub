@@ -1,13 +1,17 @@
 {
   "name": "oharu-skill-hub",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check:sync": "node scripts/check-sync.ts"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.38.3",

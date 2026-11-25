@@ -25,14 +25,16 @@ import { Aside } from '@astrojs/starlight/components';
 | Security | `#DD344C` |
 | General | `#232F3E` |
 
+Draw.io では一部のサービスが 2 つのパレットに載っています。その場合、スキルは AWS 公式の Architecture Icons のカテゴリに従います。API Gateway は Networking ではなく App Integration（`#E7157B`）です。
+
 ## アイコン参照ファイル
 
 スキルには AWS カテゴリごとに 7 つのリファレンスファイルが同梱されています。各ファイルには Draw.io シェイプ名（`mxgraph.aws4.*`）とカテゴリカラーが記載されています。
 
 - **aws-icons-compute** — EC2、Lambda、ECS、EKS、Fargate、ELB
 - **aws-icons-storage-database** — S3、EBS、RDS、DynamoDB、Aurora、ElastiCache
-- **aws-icons-networking** — VPC、CloudFront、Route 53、API Gateway、Direct Connect
-- **aws-icons-app-integration** — SNS、SQS、EventBridge、Step Functions、CloudWatch、CloudFormation
+- **aws-icons-networking** — VPC、CloudFront、Route 53、Direct Connect
+- **aws-icons-app-integration** — API Gateway、SNS、SQS、EventBridge、Step Functions、CloudWatch、CloudFormation
 - **aws-icons-analytics-ml** — Athena、Glue、Kinesis、OpenSearch、Bedrock、SageMaker
 - **aws-icons-security** — IAM、Cognito、WAF、Shield、KMS、GuardDuty
 - **aws-icons-common** — ユーザー、サーバー、インターネット、グループ、矢印
@@ -97,8 +99,11 @@ AWS Cloud、Region、VPC、Subnet などのグループに使用します。境�
 - **ネスト階層** — AWS Cloud → Region → VPC → Subnet
 - **主フロー方向** — 通常は左から右
 - **アイコンサイズ** — サービス・リソースともに 48×48 px
-- **フォントサイズ** — アイコンラベル 12 px、エッジラベル 10 px
+- **フォントサイズ** — アイコンラベル 12 px、エッジラベル 10 px、エッジ上の丸囲み手順番号は 14 px 太字
 - **エッジ色** — デフォルトは `#545B64`（AWS グレー）
+- **下から出入りしない** — アイコンラベルはアイコンの下にあるため、エッジがアイコンの下辺から出入りすることはありません。スキルは `exitX`/`exitY` と `entryX`/`entryY` で接続辺を明示します。左から右のフローでは `exitX=1;exitY=0.5` と `entryX=0;entryY=0.5` を使います
+- **ガター経由のルーティング** — 行をまたぐエッジは、行の横に空けた列（ガター）を通ります。ガター内に 2 つの中継点を置き、ターゲットには同じ側から入ります。レーンヘッダーはガターの手前で止め、エッジがヘッダーを横切らないようにします
+- **エッジラベルの位置** — Draw.io はラベルをパス全体の中点に置くため、折れ曲がったエッジでは区切り線やヘッダーの上に重なることがあります。スキルはエッジジオメトリの `x`（ソース側 -1 からターゲット側 1）でラベルを何とも交差しない直線区間へ移動します。例：`<mxGeometry x="0.5" relative="1" as="geometry">`
 - **上限密度** — 可読性のため 1 図あたり 15〜20 アイコンまで
 - **ラベル** — プレーンテキストのみ、HTML 不可
 - **全面カバー背景** — すべての要素の背後に `#F5F5F5` の角丸矩形を敷くことで、PNG エクスポート時に黒背景ではなく明るい背景になります
@@ -124,7 +129,13 @@ AWS Cloud、Region、VPC、Subnet などのグループに使用します。境�
 
 ### レーンレイアウト
 
-フローサマリー付きのスイムレーンを使います。ヘッダーには `"① チケット取得 → ② データ保存 → ③ AI変換 → ④ 索引化"` のような要約を置きます。レーンは破線の縦線で区切ります。凡例は色付きレーンの外に置き、可読性を確保します。
+フローサマリー付きのスイムレーンを使います。ヘッダーには `"① チケット取得 → ② データ保存 → ③ AI変換 → ④ 索引化"` のような要約を置きます。レーンは 1 つの AWS Cloud グループの中で上から下へ積み重ね、各ヘッダーを自分のアイコン行の真上に置きます。レーン同士は色付きブロックではなく破線の横線で区切ります。レーンをまたぐエッジは前述のガター経由で通します。凡例は色付きレーンの外に置き、可読性を確保します。
+
+区切り線は 2 点間のエッジで、Draw.io はエッジにデフォルトで矢印を付けるため、スタイルで両端の矢印を消します。
+
+```
+endArrow=none;startArrow=none;strokeColor=#94A3B8;strokeWidth=1;dashed=1;dashPattern=8 4;
+```
 
 ## マネージドサービス + VPC エンドポイントパターン
 

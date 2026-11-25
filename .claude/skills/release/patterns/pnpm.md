@@ -1,6 +1,7 @@
 # Validation Pattern: pnpm (Astro + Starlight)
 
-**Summary for Phase 0 announcement:** locale parity check and production build.
+**Summary for Phase 0 announcement:** locale parity check, production build, and a
+report-only source sync check.
 
 `npm` and `npx` are blocked on this machine. Every command here uses `pnpm` / `pnpm dlx`.
 
@@ -24,9 +25,22 @@ the build on a sidebar `slug` with no page and on invalid page frontmatter. It d
 **not** check links inside page prose: no links validator is installed, so a broken
 `/skills/<slug>/` link builds green. The review checks those (Dimension 2).
 
-There is no `check`, `lint` or `test` script, and none is invented here. `astro check` is
-not installed (`@astrojs/check` is not a dependency), so type errors in `.astro` and `.ts`
+There is no `lint` or `test` script, and none is invented here. `astro check` is not
+installed (`@astrojs/check` is not a dependency), so type errors in `.astro` and `.ts`
 files surface only where they break the build.
+
+### Source Sync (report only)
+
+```bash
+pnpm check:sync
+```
+
+Lists hub pages whose source in `oharu121/skills` changed after the page's `syncedAt` in
+`src/data/skills.ts`. Exit 1 means stale pages, exit 2 means the GitHub lookup failed.
+Neither blocks the release: drift is usually unrelated to the change being shipped. Quote
+the stale slugs and their commits in the On Pass statement so the owner sees them. If this
+release updates a stale page, its `syncedAt` must move to the printed main SHA in the same
+release.
 
 ## On Failure
 
@@ -38,7 +52,8 @@ Show the failing output first, then use AskUserQuestion:
 ## On Pass
 
 State: "Validation passed (`locale-parity`, `pnpm build`)." Quote any warning the build
-printed, with file and meaning; a passing build with warnings is not a clean pass.
+printed, with file and meaning; a passing build with warnings is not a clean pass. Then
+state the `check:sync` result: "All pages in sync", or the stale slugs with their commits.
 
 ---
 
