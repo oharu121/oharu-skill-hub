@@ -46,7 +46,7 @@ The old host keeps working, since Vercel serves a project on its `.vercel.app` d
 
 1. `curl -sI https://skills.oharu121.com/` returns `HTTP/2 200`.
 2. `pnpm build`, then `grep -o 'rel="canonical" href="[^"]*"' dist/index.html` prints `https://skills.oharu121.com/`.
-3. `grep -rn "oharu-skill-hub.vercel.app" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.astro .` matches only `.plans/initial-public-release-bilingual-skill-hub.md`.
+3. `grep -rn "oharu-skill-hub.vercel.app" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.astro --exclude-dir=.plans --exclude=CHANGELOG.md .` prints nothing. `CHANGELOG.md` and `.plans/` are excluded because they describe the old host in prose rather than link to it.
 
 ## Breaking Changes
 
