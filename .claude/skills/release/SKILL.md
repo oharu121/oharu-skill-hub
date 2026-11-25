@@ -2,7 +2,7 @@
 name: release
 description: Release a change to the Oharu Skill Hub. Creates a GitHub issue and plan file, validates locale parity and the build, reviews the diff, opens a PR, waits for the Vercel preview, squash merges, tags, and publishes a GitHub release.
 user-invocable: true
-allowed-tools: Bash(git describe *), Bash(git rev-parse --git-dir --git-common-dir), Bash(git branch -m *), Bash(git checkout --detach origin/main), Bash(git worktree remove .claude/worktrees/*), Bash(git worktree list --porcelain), Bash(git status --porcelain), Bash(git status --porcelain *), Bash(git status --short), Bash(git log *), Bash(git diff *), Bash(git rev-list *), Bash(git merge-base *), Bash(git branch --show-current), Bash(git fetch), Bash(git fetch *), Bash(git pull), Bash(git pull *), Bash(git checkout -b *), Bash(git checkout main), Bash(git add *), Bash(git commit -m *), Bash(git push -u origin *), Bash(git push origin v*), Bash(git tag v*), Bash(curl -sS -o /dev/null *), Bash(sleep *), Bash(gh issue *), Bash(gh pr *), Bash(gh release *), Bash(gh repo view *), Bash(gh api repos/*/milestones*), Bash(gh api repos/*/deployments*), Bash(gh api repos/*/commits/*), Bash(pnpm build), Bash(pnpm preview), Bash(pnpm version *), Bash(mktemp -d), Bash(node .claude/skills/release/scripts/release-guard.ts *), Skill(simplify), Skill(simplify *), Read, Write, Edit, Glob, Grep, AskUserQuestion, Task, TodoWrite
+allowed-tools: Bash(git describe *), Bash(git rev-parse --git-dir --git-common-dir), Bash(git branch -m *), Bash(git checkout --detach origin/main), Bash(git worktree remove .claude/worktrees/*), Bash(git worktree list --porcelain), Bash(git status --porcelain), Bash(git status --porcelain *), Bash(git status --short), Bash(git log *), Bash(git diff *), Bash(git rev-list *), Bash(git merge-base *), Bash(git branch --show-current), Bash(git fetch), Bash(git fetch *), Bash(git pull), Bash(git pull *), Bash(git checkout -b *), Bash(git checkout main), Bash(git add *), Bash(git commit -m *), Bash(git push -u origin *), Bash(git push origin v*), Bash(git tag v*), Bash(curl -sS -o /dev/null *), Bash(sleep *), Bash(gh issue *), Bash(gh pr *), Bash(gh release *), Bash(gh repo view *), Bash(gh api repos/*/milestones*), Bash(gh api repos/*/deployments*), Bash(gh api repos/*/commits/*), Bash(pnpm build), Bash(pnpm check:sync), Bash(pnpm preview), Bash(pnpm version *), Bash(mktemp -d), Bash(node .claude/skills/release/scripts/release-guard.ts *), Skill(simplify), Skill(simplify *), Read, Write, Edit, Glob, Grep, AskUserQuestion, Task, TodoWrite
 ---
 
 # Release Skill
@@ -164,7 +164,7 @@ what already exists.
 ### 0b: Load the Validation Pattern
 
 Read the file named by the **Validation** row. State what will run (`locale-parity`,
-`pnpm build`) and continue without asking.
+`pnpm build`, `check:sync`) and continue without asking.
 
 Then look at what is pending:
 

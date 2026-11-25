@@ -25,14 +25,16 @@ Every AWS service icon renders with the fill color for its category. The skill e
 | Security | `#DD344C` |
 | General | `#232F3E` |
 
+Draw.io lists a few services in two palettes. For those, the skill follows the category in AWS's own Architecture Icons: API Gateway is App Integration (`#E7157B`), not Networking.
+
 ## Icon lookup files
 
 The skill ships 7 reference files — one per AWS category. Each lists the Draw.io shape names (`mxgraph.aws4.*`) and category color.
 
 - **aws-icons-compute** — EC2, Lambda, ECS, EKS, Fargate, ELB
 - **aws-icons-storage-database** — S3, EBS, RDS, DynamoDB, Aurora, ElastiCache
-- **aws-icons-networking** — VPC, CloudFront, Route 53, API Gateway, Direct Connect
-- **aws-icons-app-integration** — SNS, SQS, EventBridge, Step Functions, CloudWatch, CloudFormation
+- **aws-icons-networking** — VPC, CloudFront, Route 53, Direct Connect
+- **aws-icons-app-integration** — API Gateway, SNS, SQS, EventBridge, Step Functions, CloudWatch, CloudFormation
 - **aws-icons-analytics-ml** — Athena, Glue, Kinesis, OpenSearch, Bedrock, SageMaker
 - **aws-icons-security** — IAM, Cognito, WAF, Shield, KMS, GuardDuty
 - **aws-icons-common** — users, servers, internet, groups, arrows
@@ -97,8 +99,11 @@ Default arrow style. Use `#545B64` (AWS gray) for the line and label.
 - **Nesting hierarchy** — AWS Cloud → Region → VPC → Subnet
 - **Primary flow direction** — usually left-to-right
 - **Icon size** — 48×48 px for both service and resource icons
-- **Font sizes** — 12px for icon labels, 10px for edge labels
+- **Font sizes** — 12px for icon labels, 10px for edge labels, 14px bold for circled step numbers on edges
 - **Edge color** — `#545B64` (AWS gray) by default
+- **No bottom exits** — icon labels sit below icons, so an edge never leaves or enters an icon from the bottom. The skill sets the sides explicitly with `exitX`/`exitY` and `entryX`/`entryY`; left-to-right flow uses `exitX=1;exitY=0.5` and `entryX=0;entryY=0.5`
+- **Gutter routing** — an edge between rows runs through an empty column beside them, with two waypoints in the gutter, and enters the target from the same side. Lane headers stop short of the gutter so the edge never crosses them
+- **Edge label placement** — Draw.io puts a label at the midpoint of the whole path, which on a bent edge can land on a divider or header. The skill moves it onto a clear straight segment with the edge geometry's `x` (from -1 at the source to 1 at the target), for example `<mxGeometry x="0.5" relative="1" as="geometry">`
 - **Max density** — 15–20 icons per diagram for readability
 - **Labels** — plain text only, no HTML
 - **Full-coverage background** — a light `#F5F5F5` rounded rectangle behind everything ensures PNG exports have a clean background instead of black
@@ -124,7 +129,13 @@ Different circle styles distinguish parallel flows.
 
 ### Lane layout
 
-Use swim lanes with flow summaries in the header: `"① チケット取得 → ② データ保存 → ③ AI変換 → ④ 索引化"`. Separate lanes with a dashed vertical line. Place the legend outside any colored lane so it stays readable.
+Use swim lanes with flow summaries in the header: `"① チケット取得 → ② データ保存 → ③ AI変換 → ④ 索引化"`. Lanes stack top to bottom inside the single AWS Cloud group, each header directly above its own row of icons, separated by a dashed horizontal line rather than colored blocks. An edge that crosses lanes takes the gutter route above. Place the legend outside any colored lane so it stays readable.
+
+The divider is an edge between two points, and Draw.io draws an arrowhead on an edge by default, so its style turns both ends off:
+
+```
+endArrow=none;startArrow=none;strokeColor=#94A3B8;strokeWidth=1;dashed=1;dashPattern=8 4;
+```
 
 ## Managed services + VPC endpoints pattern
 

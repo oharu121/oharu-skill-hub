@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.2.1] — 2026-11-25
+
+### Added
+
+- `pnpm check:sync` lists hub pages whose skill or gem in `oharu121/skills` changed after the page was last updated, naming the commits each page is missing. Each entry in `src/data/skills.ts` records the skills commit it was last checked against as `syncedAt`. The `release` skill runs the check and reports drift without blocking.
 
 ### Changed
+
+- The `aws-architecture-diagram` reference page, in English and Japanese, now matches the skill's layout rules from skills #12: stacked lanes with a dashed horizontal divider that draws no arrowheads, edges that never leave an icon from the bottom, gutter routing between rows, edge labels moved onto clear segments, 14px bold step numbers, and API Gateway coloured as Application Integration rather than Networking.
 
 - The `release` skill's `/simplify` step also reviews YAML config, tells files it created apart from another session's untracked files, and stops to ask when shipped code would depend on an edit outside the release.
 - The `release` skill now runs the `/simplify` code-cleanup review on the code it ships, and skips it for releases of guide pages and images only. Its command rules are explained by worktree isolation rather than by avoiding permission prompts, which auto mode makes rare.
@@ -38,5 +44,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Starlight i18n with `defaultLocale: 'root'` — English at `/`, Japanese at `/ja/`.
 - Pagefind static search, Starlight sidebar with curated AWS + Workflows sub-groups, automatic TOC per page.
 
+[v0.2.1]: https://github.com/oharu121/oharu-skill-hub/releases/tag/v0.2.1
 [v0.2.0]: https://github.com/oharu121/oharu-skill-hub/releases/tag/v0.2.0
 [v0.1.0]: https://github.com/oharu121/oharu-skill-hub/releases/tag/v0.1.0
