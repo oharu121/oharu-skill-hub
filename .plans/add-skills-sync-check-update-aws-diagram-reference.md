@@ -51,6 +51,8 @@ The first use of the check is the stale `aws-architecture-diagram` reference pag
 | Skill path is a prefix of another (`skills/logo` vs `skills/logo-x`) | Matches the exact file or `<path>/` only |
 | Drift exists while releasing an unrelated change | `/release` reports it and continues |
 | More than 300 files changed since `syncedAt` | GitHub truncates the compare file list; a change beyond it can be missed. Not reachable at this repo's size |
+| Path touched, but its commits fall outside the API caps (250 compare commits, 100 history entries) | Still `STALE`: the diff decides staleness, and the page prints `too many commits to list` instead of the commits. Caught in review |
+| Node older than 22.18 | `engines.node` in `package.json` declares the requirement for Node's type stripping, and the README says so. Caught in review |
 
 ## Verification
 
