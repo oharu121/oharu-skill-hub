@@ -57,7 +57,7 @@ row no step reads.
 | Setting        | Value                                                                  | Read by        |
 | -------------- | ---------------------------------------------------------------------- | -------------- |
 | Repo           | **`oharu121/oharu-skill-hub`**                                         | Steps 6a, 13.5, 14, 15 |
-| Site           | **`https://oharu-skill-hub.vercel.app`**                               | Step 14.5      |
+| Site           | **`https://skills.oharu121.com`**                                      | Step 14.5      |
 | Language       | **English**                                                            | Steps 5, 14    |
 | Validation     | **`SKILLS_DIR/patterns/pnpm.md`**                                      | Steps 0b, 4, 9, 11, 12.6 |
 | Labels         | **`enhancement`, `bug`, `documentation`** — the repo's own labels      | Step 3         |
@@ -645,7 +645,7 @@ mergeCommit --jq .mergeCommit.oid` on a skipped version). On `pending` or `in_pr
 `sleep 30` and read again. On `success`, check the site:
 
 ```bash
-curl -sS -o /dev/null -w "%{http_code}\n" https://oharu-skill-hub.vercel.app/
+curl -sS -o /dev/null -w "%{http_code}\n" https://skills.oharu121.com/
 ```
 
 Anything but `success` and `200` is reported in Step 17 as a failed deploy, with the

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.2] — 2026-11-25
+
+### Changed
+
+- The hub is now served at `https://skills.oharu121.com`. Canonical links, the sitemap and the README point at the new host; `oharu-skill-hub.vercel.app` still serves the same site.
+
 ## [v0.2.1] — 2026-11-25
 
 ### Added
@@ -44,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Starlight i18n with `defaultLocale: 'root'` — English at `/`, Japanese at `/ja/`.
 - Pagefind static search, Starlight sidebar with curated AWS + Workflows sub-groups, automatic TOC per page.
 
+[v0.2.2]: https://github.com/oharu121/oharu-skill-hub/releases/tag/v0.2.2
 [v0.2.1]: https://github.com/oharu121/oharu-skill-hub/releases/tag/v0.2.1
 [v0.2.0]: https://github.com/oharu121/oharu-skill-hub/releases/tag/v0.2.0
 [v0.1.0]: https://github.com/oharu121/oharu-skill-hub/releases/tag/v0.1.0
