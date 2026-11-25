@@ -50,7 +50,7 @@ astro.config.mjs      Site + sidebar + i18n config
 
 ## Keeping pages in sync with the skills
 
-`pnpm check:sync` compares each entry's `syncedAt` with the history of its source path in `oharu121/skills` and lists the commits a page has not caught up with. After updating a stale page (EN and JA), set its `syncedAt` to the main SHA the script prints. It authenticates with `GITHUB_TOKEN`, `GH_TOKEN`, or your `gh` login, falling back to the anonymous API limit (60 requests/hour) when none is available. The `/release` flow runs this check and reports drift without blocking.
+`pnpm check:sync` compares each entry's `syncedAt` with the history of its source path in `oharu121/skills` and lists the commits a page has not caught up with. After updating a stale page (EN and JA), set its `syncedAt` to the main SHA the script prints. It authenticates with `GITHUB_TOKEN`, `GH_TOKEN`, or your `gh` login, falling back to the anonymous API limit (60 requests/hour) when none is available. The `/release` flow runs this check and reports drift without blocking. The script is TypeScript run directly by Node's type stripping, so it needs Node 22.18 or later.
 
 ## License
 

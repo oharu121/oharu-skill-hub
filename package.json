@@ -10,6 +10,9 @@
     "astro": "astro",
     "check:sync": "node scripts/check-sync.ts"
   },
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "dependencies": {
     "@astrojs/starlight": "^0.38.3",
     "astro": "^6.0.1",

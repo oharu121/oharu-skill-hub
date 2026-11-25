@@ -72,25 +72,30 @@ async function main() {
 				const touched = (cmp.files ?? []).some(
 					(f) => f.filename === path || f.filename.startsWith(`${path}/`),
 				);
-				if (!touched) return { entry, path, newer: [] as Commit[] };
+				if (!touched) return { entry, path, stale: false, newer: [] as Commit[] };
 				// Name the commits for a stale page: its path history, kept to those after syncedAt.
+				// The listing is best effort (compare lists 250 commits, history is one page of 100);
+				// the diff above is what decides the page is stale.
 				const ahead = new Set(cmp.commits.map((c) => c.sha));
 				const history = await api<Commit[]>(
 					`commits?sha=main&path=${encodeURIComponent(path)}&per_page=100`,
 				);
-				return { entry, path, newer: history.filter((c) => ahead.has(c.sha)) };
+				return { entry, path, stale: true, newer: history.filter((c) => ahead.has(c.sha)) };
 			}),
 		),
 	]);
 
-	for (const { entry, path, newer } of results) {
-		console.log(`${newer.length ? 'STALE' : 'ok   '}  ${entry.slug}  (${path})`);
+	for (const { entry, path, stale, newer } of results) {
+		console.log(`${stale ? 'STALE' : 'ok   '}  ${entry.slug}  (${path})`);
 		for (const c of newer) {
 			console.log(`         ${c.sha.slice(0, 7)} ${c.commit.message.split('\n')[0]}`);
 		}
+		if (stale && !newer.length) {
+			console.log(`         (changed since ${entry.syncedAt.slice(0, 7)}; too many commits to list)`);
+		}
 	}
 
-	const staleCount = results.filter((r) => r.newer.length).length;
+	const staleCount = results.filter((r) => r.stale).length;
 	console.log(`\n${repo} main is ${head}`);
 	if (staleCount) {
 		console.log(
