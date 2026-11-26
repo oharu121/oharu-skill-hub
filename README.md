@@ -4,16 +4,16 @@ Documentation hub for the custom Claude Code skills and Gemini gems in [`oharu12
 
 Built with [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/). Bilingual (English + 日本語), deployed on Vercel.
 
-- **Site:** https://oharu-skill-hub.vercel.app
+- **Site:** https://skills.oharu121.com
 - **Source skills:** https://github.com/oharu121/skills
 
 ## What's documented
 
 8 Claude Code skills and 3 Gemini gems — original prose, copy-paste install commands, narrative walkthroughs.
 
-- [Skills](https://oharu-skill-hub.vercel.app/skills/)
-- [Gems](https://oharu-skill-hub.vercel.app/gems/)
-- [Getting started](https://oharu-skill-hub.vercel.app/start/welcome/)
+- [Skills](https://skills.oharu121.com/skills/)
+- [Gems](https://skills.oharu121.com/gems/)
+- [Getting started](https://skills.oharu121.com/start/welcome/)
 
 ## Local development
 
